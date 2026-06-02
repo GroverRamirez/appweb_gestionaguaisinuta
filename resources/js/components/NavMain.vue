@@ -14,21 +14,25 @@ defineProps<{
     items: NavItem[];
 }>();
 
-const { isCurrentUrl } = useCurrentUrl();
+const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 </script>
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel class="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/55">
+        <SidebarGroupLabel class="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/60">
             Menú principal
         </SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton
                     as-child
-                    :is-active="isCurrentUrl(item.href)"
+                    :is-active="
+                        item.matchPrefix
+                            ? isCurrentOrParentUrl(item.href)
+                            : isCurrentUrl(item.href)
+                    "
                     :tooltip="item.title"
-                    class="rounded-xl transition-colors data-[active=true]:bg-gradient-to-r data-[active=true]:from-cyan-500 data-[active=true]:to-teal-600 data-[active=true]:text-white data-[active=true]:shadow-lg data-[active=true]:shadow-cyan-500/30 hover:bg-sidebar-accent"
+                    class="rounded-xl text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                     <Link :href="item.href">
                         <component :is="item.icon" class="size-4" />

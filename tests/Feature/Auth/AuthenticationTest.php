@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PermissionsSeeder;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
@@ -11,7 +13,11 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+    $this->seed(PermissionsSeeder::class);
+
+    $user = User::factory()->create(['role' => Role::CAJERA]);
+    $role = Role::where('nombre', Role::CAJERA)->firstOrFail();
+    $user->roles()->sync([$role->id]);
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,

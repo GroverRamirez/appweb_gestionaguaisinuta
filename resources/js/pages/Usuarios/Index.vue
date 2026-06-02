@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { useDebounceFn } from '@vueuse/core';
-import { Pencil, Plus, Shield, UserCheck, UserX, Users } from 'lucide-vue-next';
+import { ClipboardList, Pencil, Plus, Shield, UserCheck, UserX, Users } from 'lucide-vue-next';
 import { computed, ref, watch, withDefaults } from 'vue';
 
 type Usuario = {
@@ -100,6 +100,12 @@ const cambiarEstado = (usuario: Usuario) => {
                 description="Administre cuentas, roles y accesos al sistema ISINUTA"
             >
                 <template #actions>
+                    <Link href="/usuarios/auditoria">
+                        <Button variant="outline" class="rounded-xl">
+                            <ClipboardList class="mr-1.5 size-4" />
+                            Auditoría
+                        </Button>
+                    </Link>
                     <Link href="/usuarios/crear">
                         <Button class="rounded-xl shadow-md shadow-primary/20">
                             <Plus class="mr-1.5 size-4" />
@@ -164,10 +170,10 @@ const cambiarEstado = (usuario: Usuario) => {
                 </div>
             </div>
 
-            <DataCard>
+            <DataCard compact>
                 <template #header>
                     <div
-                        class="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+                        class="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
                     >
                         <div>
                             <h2 class="font-semibold text-foreground">Cuentas registradas</h2>
@@ -183,66 +189,60 @@ const cambiarEstado = (usuario: Usuario) => {
                     </div>
                 </template>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[760px] text-sm">
+                <div class="isinuta-table-wrap -mx-1">
+                    <table class="isinuta-table min-w-[760px]">
                         <thead>
-                            <tr
-                                class="border-b border-border/80 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                            >
-                                <th class="pb-3 pr-4">Usuario</th>
-                                <th class="pb-3 pr-4">Correo</th>
-                                <th class="pb-3 pr-4">Rol</th>
-                                <th class="pb-3 pr-4">Estado</th>
-                                <th class="pb-3 text-right">Acciones</th>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-border/50">
-                            <tr
-                                v-for="usuario in usuarios.data"
-                                :key="usuario.id"
-                                class="transition-colors hover:bg-primary/5"
-                            >
-                                <td class="py-4 pr-4">
-                                    <div class="flex items-center gap-3">
+                        <tbody>
+                            <tr v-for="usuario in usuarios.data" :key="usuario.id">
+                                <td>
+                                    <div class="isinuta-table-user">
                                         <div
-                                            class="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/15 to-purple-500/15 text-sm font-bold text-primary ring-1 ring-primary/10"
+                                            class="isinuta-table-avatar bg-gradient-to-br from-violet-500/15 to-purple-500/15 text-primary"
                                         >
                                             {{ iniciales(usuario) }}
                                         </div>
-                                        <p class="font-semibold">{{ usuario.name }}</p>
+                                        <p class="font-semibold leading-tight">{{ usuario.name }}</p>
                                     </div>
                                 </td>
-                                <td class="py-4 pr-4 text-muted-foreground">
+                                <td class="text-muted-foreground">
                                     {{ usuario.email }}
                                 </td>
-                                <td class="py-4 pr-4">
+                                <td>
                                     <span
-                                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset"
                                         :class="clasesRol(usuario.etiqueta_rol)"
                                     >
                                         {{ usuario.etiqueta_rol }}
                                     </span>
                                 </td>
-                                <td class="py-4 pr-4">
+                                <td>
                                     <StatusBadge
                                         :status="usuario.estado"
                                         :label="usuario.estado === 'activo' ? 'Activo' : 'Inactivo'"
                                     />
                                 </td>
-                                <td class="py-4 text-right">
-                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                <td class="text-right">
+                                    <div class="isinuta-table-actions">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            class="rounded-lg"
+                                            class="isinuta-table-btn"
                                             :disabled="usuario.id === usuarioActualId && usuario.estado === 'activo'"
                                             @click="cambiarEstado(usuario)"
                                         >
                                             {{ usuario.estado === 'activo' ? 'Desactivar' : 'Activar' }}
                                         </Button>
                                         <Link :href="`/usuarios/${usuario.id}/editar`">
-                                            <Button variant="outline" size="sm" class="rounded-lg">
-                                                <Pencil class="mr-1.5 size-3.5" />
+                                            <Button variant="outline" size="sm" class="isinuta-table-btn">
+                                                <Pencil class="mr-1 size-3" />
                                                 Editar
                                             </Button>
                                         </Link>
@@ -250,7 +250,7 @@ const cambiarEstado = (usuario: Usuario) => {
                                 </td>
                             </tr>
                             <tr v-if="usuarios.data.length === 0">
-                                <td colspan="5" class="py-12 text-center text-muted-foreground">
+                                <td colspan="5" class="py-8 text-center text-muted-foreground">
                                     No se encontraron usuarios.
                                 </td>
                             </tr>
@@ -258,7 +258,7 @@ const cambiarEstado = (usuario: Usuario) => {
                     </table>
                 </div>
 
-                <div v-if="usuarios.data.length > 0" class="mt-6 border-t border-border/50 pt-4">
+                <div v-if="usuarios.data.length > 0" class="mt-4 border-t border-border/50 pt-3">
                     <PaginationLinks :links="usuarios.links" />
                 </div>
             </DataCard>

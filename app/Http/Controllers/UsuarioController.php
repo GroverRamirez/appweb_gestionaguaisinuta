@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Teams\CreateTeam;
-use App\Models\Role;
-use App\Models\User;
+use App\Enums\AccionAuditoriaUsuario;
 use App\Http\Requests\StoreUsuarioRequest;
 use App\Http\Requests\UpdateUsuarioEstadoRequest;
 use App\Http\Requests\UpdateUsuarioRequest;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\UsuarioAuditoriaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +17,14 @@ use Inertia\Response;
 
 class UsuarioController extends Controller
 {
-    public function __construct(private CreateTeam $createTeam) {}
+    public function __construct(
+        private UsuarioAuditoriaService $auditoria,
+    ) {}
+
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', User::class);
+
         $query = User::query()->with('roles');
 
         if ($request->filled('busqueda')) {
@@ -59,6 +65,8 @@ class UsuarioController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', User::class);
+
         return Inertia::render('Usuarios/Create', [
             'roles_disponibles' => $this->rolesDisponibles(),
         ]);
@@ -78,12 +86,23 @@ class UsuarioController extends Controller
                 'estado' => User::ESTADO_ACTIVO,
             ]);
 
-            $this->createTeam->handle($usuario, $usuario->name."'s Team", isPersonal: true);
             $usuario->assignRole($role);
             $usuario->ensureRolesHavePermissions();
 
             return $usuario;
         });
+
+        $this->auditoria->registrar(
+            $request->user(),
+            $usuario,
+            AccionAuditoriaUsuario::Creado,
+            [
+                'name' => $usuario->name,
+                'email' => $usuario->email,
+                'role' => $role,
+            ],
+            $request,
+        );
 
         return redirect()
             ->route('usuarios.index')
@@ -92,6 +111,8 @@ class UsuarioController extends Controller
 
     public function edit(User $usuario): Response
     {
+        $this->authorize('update', $usuario);
+
         $usuario->load('roles');
 
         return Inertia::render('Usuarios/Edit', [
@@ -108,6 +129,8 @@ class UsuarioController extends Controller
 
     public function update(UpdateUsuarioRequest $request, User $usuario): RedirectResponse
     {
+        $this->authorize('update', $usuario);
+
         if ($request->user()->is($usuario) && $request->string('role')->toString() !== Role::ADMIN) {
             return back()->with('error', 'No puede quitarse el rol de administrador a usted mismo.');
         }
@@ -128,9 +151,18 @@ class UsuarioController extends Controller
         $role = $request->string('role')->toString();
         $estado = $request->string('estado')->toString();
 
-        if ($mensaje = $this->mensajeErrorCambioEstado($usuario, $estado, $request->user())) {
-            return back()->with('error', $mensaje);
+        if ($estado === User::ESTADO_INACTIVO) {
+            if ($mensaje = $usuario->mensajeErrorAlDesactivar($request->user())) {
+                return back()->with('error', $mensaje);
+            }
         }
+
+        $antes = [
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'estado' => $usuario->estado ?? User::ESTADO_ACTIVO,
+            'role' => $this->rolPrincipal($usuario),
+        ];
 
         $usuario->update([
             ...$request->only(['name', 'email']),
@@ -140,6 +172,22 @@ class UsuarioController extends Controller
         $usuario->assignRole($role);
         $usuario->ensureRolesHavePermissions();
 
+        $this->auditoria->registrar(
+            $request->user(),
+            $usuario,
+            AccionAuditoriaUsuario::Actualizado,
+            [
+                'antes' => $antes,
+                'despues' => [
+                    'name' => $usuario->name,
+                    'email' => $usuario->email,
+                    'estado' => $usuario->estado,
+                    'role' => $role,
+                ],
+            ],
+            $request,
+        );
+
         return redirect()
             ->route('usuarios.index')
             ->with('success', 'Usuario actualizado correctamente.');
@@ -147,13 +195,28 @@ class UsuarioController extends Controller
 
     public function updateEstado(UpdateUsuarioEstadoRequest $request, User $usuario): RedirectResponse
     {
+        $this->authorize('updateEstado', $usuario);
+
         $estado = $request->string('estado')->toString();
 
-        if ($mensaje = $this->mensajeErrorCambioEstado($usuario, $estado, $request->user())) {
+        if ($estado === User::ESTADO_INACTIVO && ($mensaje = $usuario->mensajeErrorAlDesactivar($request->user()))) {
             return back()->with('error', $mensaje);
         }
 
+        $estadoAnterior = $usuario->estado ?? User::ESTADO_ACTIVO;
+
         $usuario->update(['estado' => $estado]);
+
+        $this->auditoria->registrar(
+            $request->user(),
+            $usuario,
+            AccionAuditoriaUsuario::EstadoCambiado,
+            [
+                'estado_anterior' => $estadoAnterior,
+                'estado_nuevo' => $estado,
+            ],
+            $request,
+        );
 
         $etiqueta = $estado === User::ESTADO_ACTIVO ? 'activado' : 'desactivado';
 
@@ -189,27 +252,6 @@ class UsuarioController extends Controller
     private function etiquetaRol(User $user): string
     {
         return $user->etiquetaRol();
-    }
-
-    private function mensajeErrorCambioEstado(User $usuario, string $estado, User $actor): ?string
-    {
-        if ($estado === User::ESTADO_INACTIVO && $actor->is($usuario)) {
-            return 'No puede desactivar su propia cuenta.';
-        }
-
-        if ($estado === User::ESTADO_INACTIVO && $usuario->isAdmin()) {
-            $adminsActivos = User::query()
-                ->where('estado', User::ESTADO_ACTIVO)
-                ->whereHas('roles', fn ($q) => $q->where('nombre', Role::ADMIN))
-                ->whereKeyNot($usuario->id)
-                ->count();
-
-            if ($adminsActivos === 0) {
-                return 'Debe existir al menos un administrador activo en el sistema.';
-            }
-        }
-
-        return null;
     }
 
     /** @deprecated Use etiquetaRol() */

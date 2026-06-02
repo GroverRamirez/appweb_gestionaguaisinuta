@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\AccionAuditoriaUsuario;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Services\UsuarioAuditoriaService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +16,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(private UsuarioAuditoriaService $auditoria) {}
+
     /**
      * Show the user's profile settings page.
      */
@@ -49,6 +53,24 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+
+        if ($mensaje = $user->mensajeErrorSiEsUltimoAdminActivo()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => $mensaje]);
+
+            return to_route('profile.edit');
+        }
+
+        $this->auditoria->registrar(
+            $user,
+            $user,
+            AccionAuditoriaUsuario::Eliminado,
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->rolesNombres()[0] ?? $user->role,
+            ],
+            $request,
+        );
 
         Auth::logout();
 

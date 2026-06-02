@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Shield } from 'lucide-vue-next';
 
 defineProps<{
     roles_disponibles: Array<{ value: string; label: string }>;
@@ -43,6 +44,7 @@ const submit = () => {
             <PageHeader
                 title="Nuevo usuario"
                 description="Registre una cuenta con acceso al sistema ISINUTA"
+                :icon="Shield"
             >
                 <template #actions>
                     <Link href="/usuarios">
@@ -113,7 +115,7 @@ const submit = () => {
                         <select
                             id="role"
                             v-model="form.role"
-                            class="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            class="isinuta-input"
                         >
                             <option
                                 v-for="rol in roles_disponibles"

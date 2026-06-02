@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Concerns\HasTeams;
 use App\Enums\Permission as PermissionEnum;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'current_team_id', 'role', 'email_verified_at', 'estado'])]
+#[Fillable(['name', 'email', 'password', 'role', 'email_verified_at', 'estado'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -23,7 +22,7 @@ class User extends Authenticatable
     public const ESTADO_INACTIVO = 'inactivo';
 
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasTeams, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * @return array<string, string>
@@ -151,6 +150,34 @@ class User extends Authenticatable
     public function isActivo(): bool
     {
         return ($this->estado ?? self::ESTADO_ACTIVO) === self::ESTADO_ACTIVO;
+    }
+
+    public function mensajeErrorAlDesactivar(User $actor): ?string
+    {
+        if ($actor->is($this)) {
+            return 'No puede desactivar su propia cuenta.';
+        }
+
+        return $this->mensajeErrorSiEsUltimoAdminActivo();
+    }
+
+    public function mensajeErrorSiEsUltimoAdminActivo(): ?string
+    {
+        if (! $this->isAdmin()) {
+            return null;
+        }
+
+        $otrosAdminsActivos = self::query()
+            ->where('estado', self::ESTADO_ACTIVO)
+            ->whereHas('roles', fn ($q) => $q->where('nombre', Role::ADMIN))
+            ->whereKeyNot($this->id)
+            ->count();
+
+        if ($otrosAdminsActivos === 0) {
+            return 'Debe existir al menos un administrador activo en el sistema.';
+        }
+
+        return null;
     }
 
     public function etiquetaRol(): string

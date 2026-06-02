@@ -9,9 +9,10 @@ test('guests are redirected to the login page', function () {
 });
 
 test('authenticated admin can visit the panel', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => Role::ADMIN]);
     $role = Role::firstOrCreate(['nombre' => Role::ADMIN], ['descripcion' => 'Admin']);
     $user->roles()->attach($role);
+    $user = enableTwoFactorFor($user->fresh());
 
     $this->actingAs($user)->get(route('panel'))->assertOk();
 });

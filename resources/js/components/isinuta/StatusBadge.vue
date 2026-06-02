@@ -54,7 +54,7 @@ const classes = computed(() => {
 
     <span
 
-        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset"
 
         :class="classes"
 

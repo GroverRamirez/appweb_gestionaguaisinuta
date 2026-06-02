@@ -124,7 +124,7 @@ const nombreCompleto = (afiliado: Afiliado) =>
                 </div>
             </div>
 
-            <DataCard>
+            <DataCard compact>
                 <template #header>
                     <div
                         class="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
@@ -144,29 +144,23 @@ const nombreCompleto = (afiliado: Afiliado) =>
                     </div>
                 </template>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[640px] text-sm">
+                <div class="isinuta-table-wrap -mx-1">
+                    <table class="isinuta-table min-w-[640px]">
                         <thead>
-                            <tr
-                                class="border-b border-border/80 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                            >
-                                <th class="pb-3 pr-4">Afiliado</th>
-                                <th class="pb-3 pr-4">CI</th>
-                                <th class="pb-3 pr-4">Teléfono</th>
-                                <th class="pb-3 pr-4">Estado</th>
-                                <th class="pb-3 text-right">Acciones</th>
+                            <tr>
+                                <th>Afiliado</th>
+                                <th>CI</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-border/50">
-                            <tr
-                                v-for="afiliado in afiliados.data"
-                                :key="afiliado.id"
-                                class="group transition-colors hover:bg-primary/5"
-                            >
-                                <td class="py-4 pr-4">
-                                    <div class="flex items-center gap-3">
+                        <tbody>
+                            <tr v-for="afiliado in afiliados.data" :key="afiliado.id">
+                                <td>
+                                    <div class="isinuta-table-user">
                                         <div
-                                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/15 to-teal-500/15 text-sm font-bold text-primary ring-1 ring-primary/10"
+                                            class="isinuta-table-avatar bg-gradient-to-br from-cyan-500/15 to-teal-500/15 text-primary"
                                         >
                                             {{ iniciales(afiliado) }}
                                         </div>
@@ -175,19 +169,19 @@ const nombreCompleto = (afiliado: Afiliado) =>
                                         </p>
                                     </div>
                                 </td>
-                                <td class="py-4 pr-4 font-mono text-xs font-medium text-muted-foreground">
+                                <td class="font-mono text-xs font-medium text-muted-foreground">
                                     {{ afiliado.ci }}
                                 </td>
-                                <td class="py-4 pr-4 text-muted-foreground">
+                                <td class="text-muted-foreground">
                                     {{ afiliado.telefono || '—' }}
                                 </td>
-                                <td class="py-4 pr-4">
+                                <td>
                                     <StatusBadge
                                         :status="afiliado.estado"
                                         :label="afiliado.estado === 'activo' ? 'Activo' : 'Inactivo'"
                                     />
                                 </td>
-                                <td class="py-4 text-right">
+                                <td class="text-right">
                                     <Link
                                         v-if="can('afiliados.gestionar')"
                                         :href="`/afiliados/${afiliado.id}/editar`"
@@ -195,9 +189,9 @@ const nombreCompleto = (afiliado: Afiliado) =>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            class="rounded-lg border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+                                            class="isinuta-table-btn border-primary/20 hover:border-primary/40 hover:bg-primary/5"
                                         >
-                                            <Pencil class="mr-1.5 size-3.5" />
+                                            <Pencil class="mr-1 size-3" />
                                             Editar
                                         </Button>
                                     </Link>
@@ -205,9 +199,9 @@ const nombreCompleto = (afiliado: Afiliado) =>
                                 </td>
                             </tr>
                             <tr v-if="afiliados.data.length === 0">
-                                <td colspan="5" class="py-16 text-center">
+                                <td colspan="5" class="py-8 text-center">
                                     <div class="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
-                                        <Users class="size-10 opacity-30" />
+                                        <Users class="size-8 opacity-30" />
                                         <p class="font-medium">No se encontraron afiliados</p>
                                         <p class="text-xs">
                                             Pruebe otra búsqueda o registre un nuevo afiliado.
@@ -215,10 +209,10 @@ const nombreCompleto = (afiliado: Afiliado) =>
                                         <Link
                                             v-if="can('afiliados.gestionar')"
                                             href="/afiliados/crear"
-                                            class="mt-2"
+                                            class="mt-1"
                                         >
-                                            <Button size="sm" class="rounded-xl">
-                                                <Plus class="mr-1 size-4" />
+                                            <Button size="sm" class="isinuta-table-btn rounded-xl">
+                                                <Plus class="mr-1 size-3.5" />
                                                 Nuevo afiliado
                                             </Button>
                                         </Link>
@@ -229,7 +223,7 @@ const nombreCompleto = (afiliado: Afiliado) =>
                     </table>
                 </div>
 
-                <div v-if="afiliados.data.length > 0" class="mt-6 border-t border-border/50 pt-4">
+                <div v-if="afiliados.data.length > 0" class="mt-4 border-t border-border/50 pt-3">
                     <PaginationLinks :links="afiliados.links" />
                 </div>
             </DataCard>

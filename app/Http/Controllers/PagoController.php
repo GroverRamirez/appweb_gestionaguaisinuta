@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\SanitizesSearchInput;
+use App\Http\Requests\StorePagoRequest;
 use App\Models\Afiliado;
 use App\Models\Pago;
 use App\Services\GestionAguaService;
@@ -12,11 +14,15 @@ use Inertia\Response;
 
 class PagoController extends Controller
 {
+    use SanitizesSearchInput;
+
     public function __construct(private GestionAguaService $gestionAgua) {}
 
     public function index(Request $request): Response
     {
-        $q = $request->input('q');
+        $this->authorize('viewAny', Pago::class);
+
+        $q = $this->sanitizeSearchInput($request->input('q'));
         $estado = $request->input('estado');
         $mes = $request->input('mes');
         $anio = $request->input('anio');
@@ -46,6 +52,8 @@ class PagoController extends Controller
 
     public function create(Request $request): Response
     {
+        $this->authorize('create', Pago::class);
+
         $afiliadoId = $request->input('afiliado_id');
         $afiliado = $afiliadoId ? Afiliado::find($afiliadoId) : null;
 
@@ -66,7 +74,9 @@ class PagoController extends Controller
 
     public function buscarAfiliado(Request $request)
     {
-        $q = $request->input('q', '');
+        $this->authorize('buscarAfiliado', Pago::class);
+
+        $q = $this->sanitizeSearchInput($request->input('q', ''), 80) ?? '';
 
         $afiliados = Afiliado::query()
             ->where('estado', 'activo')
@@ -81,14 +91,9 @@ class PagoController extends Controller
         return response()->json($afiliados);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StorePagoRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'pago_id' => 'required|exists:pagos,id',
-            'fecha_pago' => 'required|date',
-            'metodo' => 'required|in:efectivo,transferencia,qr,otro',
-            'observaciones' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $pago = Pago::findOrFail($data['pago_id']);
 
@@ -112,6 +117,8 @@ class PagoController extends Controller
 
     public function show(Pago $pago): Response
     {
+        $this->authorize('view', $pago);
+
         $pago->load(['afiliado', 'usuario:id,name']);
 
         return Inertia::render('Pagos/Show', [
@@ -121,6 +128,8 @@ class PagoController extends Controller
 
     public function generarMes(Request $request): RedirectResponse
     {
+        $this->authorize('generarMes', Pago::class);
+
         $this->gestionAgua->generarObligacionesMesActual();
 
         return back()->with('success', 'Obligaciones del mes generadas para todos los afiliados activos.');

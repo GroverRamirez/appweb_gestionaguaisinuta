@@ -10,8 +10,9 @@ const props = withDefaults(
         icon: Component;
         trend?: string;
         variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
+        compact?: boolean;
     }>(),
-    { variant: 'default' },
+    { variant: 'default', compact: false },
 );
 
 const accentBar = computed(() => {
@@ -39,7 +40,8 @@ const iconClass = computed(() => {
 
 <template>
     <div
-        class="isinuta-card isinuta-card-hover isinuta-shine group relative overflow-hidden p-5"
+        class="isinuta-card isinuta-card-hover isinuta-shine group relative overflow-hidden"
+        :class="compact ? 'p-3.5' : 'p-5'"
     >
         <div
             aria-hidden="true"
@@ -50,12 +52,15 @@ const iconClass = computed(() => {
             aria-hidden="true"
             class="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-2xl transition group-hover:from-primary/20"
         />
-        <div class="relative flex items-start justify-between gap-3 pt-1">
-            <div class="min-w-0 flex-1 space-y-2">
-                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <div class="relative flex items-start justify-between gap-2 pt-0.5">
+            <div class="min-w-0 flex-1" :class="compact ? 'space-y-0.5' : 'space-y-2'">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     {{ title }}
                 </p>
-                <p class="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                <p
+                    class="font-extrabold tracking-tight text-foreground"
+                    :class="compact ? 'text-xl' : 'text-2xl sm:text-3xl'"
+                >
                     {{ value }}
                 </p>
                 <p v-if="subtitle" class="text-xs font-medium text-muted-foreground">
@@ -64,10 +69,10 @@ const iconClass = computed(() => {
                 <p v-if="trend" class="text-xs font-semibold text-primary">{{ trend }}</p>
             </div>
             <div
-                class="flex size-14 shrink-0 items-center justify-center rounded-2xl shadow-lg transition group-hover:scale-110 group-hover:shadow-xl"
-                :class="iconClass"
+                class="flex shrink-0 items-center justify-center rounded-xl shadow-lg transition group-hover:scale-105 group-hover:shadow-xl"
+                :class="[iconClass, compact ? 'size-10' : 'size-14 rounded-2xl group-hover:scale-110']"
             >
-                <component :is="icon" class="size-6" />
+                <component :is="icon" :class="compact ? 'size-4' : 'size-6'" />
             </div>
         </div>
     </div>

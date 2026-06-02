@@ -63,10 +63,14 @@ defineProps<{
             <p class="relative z-10 text-xs text-white/50">
                 © {{ new Date().getFullYear() }} Asociación ISINUTA
             </p>
+            <div class="isinuta-water-waves" aria-hidden="true" />
+            <div class="isinuta-water-waves isinuta-water-waves-2" aria-hidden="true" />
         </div>
 
         <div class="isinuta-mesh flex flex-col items-center justify-center p-6 md:p-10">
-            <div class="w-full max-w-[400px] space-y-8">
+            <div
+                class="w-full max-w-[420px] space-y-8 rounded-3xl border border-border/50 bg-card/80 p-8 shadow-2xl shadow-cyan-900/10 backdrop-blur-xl md:p-10"
+            >
                 <div class="flex flex-col items-center gap-2 text-center lg:items-start lg:text-left">
                     <Link :href="home()" class="mb-2 flex items-center gap-2 lg:hidden">
                         <div

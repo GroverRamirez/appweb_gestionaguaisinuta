@@ -2,11 +2,8 @@ export type User = {
     id: number;
     name: string;
     email: string;
-    avatar?: string;
     email_verified_at: string | null;
-    created_at: string;
-    updated_at: string;
-    [key: string]: unknown;
+    two_factor_enabled?: boolean;
 };
 
 export type Auth = {
@@ -15,6 +12,7 @@ export type Auth = {
     permisos?: string[];
     etiqueta_rol?: string | null;
     isAdmin?: boolean;
+    requires_two_factor_setup?: boolean;
 };
 
 export type TwoFactorConfigContent = {

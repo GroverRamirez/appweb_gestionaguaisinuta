@@ -2,18 +2,16 @@
 import { computed } from 'vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
-import type { Team, User } from '@/types';
+import type { User } from '@/types';
 
 type Props = {
     user: User;
     showEmail?: boolean;
-    team?: Team | null;
     roleLabel?: string | null;
 };
 
 const props = withDefaults(defineProps<Props>(), {
     showEmail: false,
-    team: null,
     roleLabel: null,
 });
 
@@ -45,12 +43,6 @@ const showAvatar = computed(
             class="truncate text-xs text-muted-foreground"
         >
             {{ user.email }}
-        </span>
-        <span
-            v-else-if="team && !roleLabel"
-            class="truncate text-xs text-muted-foreground"
-        >
-            {{ team.name }}
         </span>
     </div>
 </template>

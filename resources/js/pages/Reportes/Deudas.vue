@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import DataCard from '@/components/isinuta/DataCard.vue';
+import PageHeader from '@/components/isinuta/PageHeader.vue';
+import ReportNav from '@/components/isinuta/ReportNav.vue';
+import StatCard from '@/components/isinuta/StatCard.vue';
 import type { BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/vue3';
+import { AlertTriangle, BarChart3, CreditCard } from 'lucide-vue-next';
 
 defineProps<{
     afiliados: Array<{
@@ -29,41 +34,80 @@ const formatBs = (n: number) =>
 
 <template>
     <Head title="Deudas pendientes" />
+
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-1 flex-col gap-4 p-4">
-            <h1 class="text-2xl font-bold">Deudas pendientes</h1>
-            <p class="text-sm">
-                Total deuda pagos: {{ formatBs(total_deuda) }} | Multas pendientes:
-                {{ formatBs(multas_pendientes) }}
-            </p>
-            <div class="flex gap-2 text-sm">
-                <Link href="/reportes/afiliados" class="text-primary">Afiliados</Link>
-                <Link href="/reportes/recaudacion" class="text-primary">Recaudación</Link>
+        <div class="flex flex-1 flex-col gap-6">
+            <PageHeader
+                title="Deudas pendientes"
+                description="Afiliados con cuotas o multas sin cancelar"
+                :icon="BarChart3"
+            />
+
+            <ReportNav />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <StatCard
+                    title="Deuda en pagos"
+                    :value="formatBs(total_deuda)"
+                    :icon="CreditCard"
+                    variant="warning"
+                />
+                <StatCard
+                    title="Multas pendientes"
+                    :value="formatBs(multas_pendientes)"
+                    :icon="AlertTriangle"
+                    variant="danger"
+                />
             </div>
-            <div class="overflow-x-auto rounded-md border">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-muted/50">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Afiliado</th>
-                            <th class="px-4 py-2 text-left">Meses pend.</th>
-                            <th class="px-4 py-2 text-right">Pagos</th>
-                            <th class="px-4 py-2 text-right">Multas</th>
-                            <th class="px-4 py-2 text-right">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="a in afiliados" :key="a.id" class="border-t">
-                            <td class="px-4 py-2">{{ a.nombres }} {{ a.apellidos }} ({{ a.ci }})</td>
-                            <td class="px-4 py-2">{{ a.pagos_pendientes }}</td>
-                            <td class="px-4 py-2 text-right">{{ formatBs(a.deuda_pagos) }}</td>
-                            <td class="px-4 py-2 text-right">{{ formatBs(a.deuda_multas) }}</td>
-                            <td class="px-4 py-2 text-right font-medium">
-                                {{ formatBs(a.deuda_total) }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+
+            <DataCard
+                title="Detalle por afiliado"
+                :description="`${afiliados.length} afiliados con deuda`"
+                compact
+            >
+                <div v-if="afiliados.length" class="isinuta-table-wrap isinuta-table-wrap-flush">
+                    <table class="isinuta-table">
+                        <thead>
+                            <tr>
+                                <th>Afiliado</th>
+                                <th>Meses pend.</th>
+                                <th class="text-right">Pagos</th>
+                                <th class="text-right">Multas</th>
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="a in afiliados" :key="a.id">
+                                <td>
+                                    <span class="font-medium">
+                                        {{ a.nombres }} {{ a.apellidos }}
+                                    </span>
+                                    <span class="block text-xs text-muted-foreground">
+                                        CI {{ a.ci }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="inline-flex size-8 items-center justify-center rounded-lg bg-amber-500/15 text-sm font-bold text-amber-700 dark:text-amber-300"
+                                    >
+                                        {{ a.pagos_pendientes }}
+                                    </span>
+                                </td>
+                                <td class="text-right">{{ formatBs(a.deuda_pagos) }}</td>
+                                <td class="text-right">{{ formatBs(a.deuda_multas) }}</td>
+                                <td class="text-right font-bold text-red-600 dark:text-red-400">
+                                    {{ formatBs(a.deuda_total) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-else class="isinuta-empty-state">
+                    <CreditCard class="mb-3 size-10 text-emerald-500/50" />
+                    <p class="font-semibold text-foreground">¡Excelente!</p>
+                    <p class="text-sm text-muted-foreground">No hay deudas pendientes registradas.</p>
+                </div>
+            </DataCard>
         </div>
     </AppLayout>
 </template>

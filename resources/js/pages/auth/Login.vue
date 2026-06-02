@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { Droplets } from 'lucide-vue-next';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -29,9 +30,16 @@ defineProps<{
 
     <div
         v-if="status"
-        class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
+        class="isinuta-alert-success mb-4 text-center"
     >
         {{ status }}
+    </div>
+
+    <div
+        class="mb-2 flex items-center justify-center gap-2 text-primary lg:hidden"
+    >
+        <Droplets class="size-5" />
+        <span class="text-sm font-bold">ISINUTA</span>
     </div>
 
     <Form
@@ -52,7 +60,7 @@ defineProps<{
                     :tabindex="1"
                     autocomplete="email"
                     placeholder="admin@isinuta.test"
-                    class="h-11 rounded-xl"
+                    class="isinuta-input h-11"
                 />
                 <InputError :message="errors.email" />
             </div>
@@ -88,7 +96,7 @@ defineProps<{
 
             <Button
                 type="submit"
-                class="mt-2 h-11 w-full rounded-xl text-base shadow-lg shadow-primary/25"
+                class="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 text-base font-bold shadow-xl shadow-cyan-500/30 hover:from-cyan-500 hover:to-teal-500"
                 :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"

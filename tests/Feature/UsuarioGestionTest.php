@@ -14,8 +14,13 @@ function usuarioGestionUser(string $roleName): User
     $user = User::factory()->create(['role' => $roleName]);
     $role = Role::where('nombre', $roleName)->firstOrFail();
     $user->roles()->sync([$role->id]);
+    $user = $user->fresh();
 
-    return $user->fresh();
+    if ($roleName === Role::ADMIN) {
+        $user = enableTwoFactorFor($user);
+    }
+
+    return $user;
 }
 
 test('admin can access user management', function () {
@@ -79,9 +84,7 @@ test('admin can create a new user', function () {
 
     expect($created)->not->toBeNull()
         ->and($created->hasRole(Role::CAJERA))->toBeTrue()
-        ->and($created->email_verified_at)->not->toBeNull()
-        ->and($created->personalTeam())->not->toBeNull()
-        ->and($created->current_team_id)->not->toBeNull();
+        ->and($created->email_verified_at)->not->toBeNull();
 });
 
 test('cajera cannot create users', function () {
@@ -158,6 +161,22 @@ test('admin cannot deactivate their own account', function () {
     expect($admin->fresh()->estado)->toBe('activo');
 });
 
+test('inactive authenticated user is logged out on next request', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertOk();
+
+    $user->update(['estado' => User::ESTADO_INACTIVO]);
+
+    $this->get(route('profile.edit'))
+        ->assertRedirect(route('login'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+});
+
 test('inactive users cannot log in', function () {
     $user = User::factory()->inactivo()->create();
 
@@ -167,6 +186,53 @@ test('inactive users cannot log in', function () {
     ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
+});
+
+test('deactivated user loses access on next request while session was active', function () {
+    $cajera = usuarioGestionUser(Role::CAJERA);
+
+    $this->actingAs($cajera)
+        ->get(route('pagos.index'))
+        ->assertOk();
+
+    $cajera->update(['estado' => User::ESTADO_INACTIVO]);
+
+    $this->get(route('pagos.index'))
+        ->assertRedirect(route('login'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+});
+
+test('last active admin cannot delete their account', function () {
+    $admin = usuarioGestionUser(Role::ADMIN);
+
+    $this->actingAs($admin)
+        ->from(route('profile.edit'))
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($admin->fresh())->not->toBeNull();
+});
+
+test('admin can delete their account when another active admin exists', function () {
+    $role = Role::where('nombre', Role::ADMIN)->firstOrFail();
+
+    $admin = usuarioGestionUser(Role::ADMIN);
+    $otroAdmin = User::factory()->create(['role' => Role::ADMIN]);
+    $otroAdmin->roles()->sync([$role->id]);
+
+    $this->actingAs($admin)
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ])
+        ->assertRedirect(route('home'));
+
+    $this->assertGuest();
+    expect($admin->fresh())->toBeNull();
+    expect($otroAdmin->fresh())->not->toBeNull();
 });
 
 test('user index includes estado for each user', function () {

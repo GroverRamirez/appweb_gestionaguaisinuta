@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\AuthUserPresenter;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -32,11 +33,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $user,
+                'user' => fn () => AuthUserPresenter::forInertia($user),
                 'roles' => fn () => $user ? $user->rolesNombres() : [],
                 'permisos' => fn () => $user ? $user->permissionsNombres() : [],
                 'etiqueta_rol' => fn () => $user?->etiquetaRol(),
                 'isAdmin' => fn () => $user?->isAdmin() ?? false,
+                'requires_two_factor_setup' => fn () => AuthUserPresenter::requiresTwoFactorSetup($user),
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -44,8 +46,6 @@ class HandleInertiaRequests extends Middleware
                 'info' => fn () => $request->session()->get('info'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
-            'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
         ];
     }
 }

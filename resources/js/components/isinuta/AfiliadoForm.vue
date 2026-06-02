@@ -97,7 +97,7 @@ const emit = defineEmits<{
                 <select
                     id="estado"
                     v-model="form.estado"
-                    class="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    class="isinuta-input"
                 >
                     <option value="activo">Activo</option>
                     <option value="inactivo">Inactivo</option>

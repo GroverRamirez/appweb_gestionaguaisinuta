@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Actions\Teams\CreateTeam;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -10,8 +9,6 @@ use Illuminate\Support\Facades\Hash;
 
 class UsuariosSeeder extends Seeder
 {
-    public function __construct(private CreateTeam $createTeam) {}
-
     public function run(): void
     {
         $this->upsertUserWithRole([
@@ -53,9 +50,5 @@ class UsuariosSeeder extends Seeder
         );
 
         $user->assignRole($data['role']);
-
-        if (! $user->personalTeam()) {
-            $this->createTeam->handle($user, $user->name."'s Team", isPersonal: true);
-        }
     }
 }

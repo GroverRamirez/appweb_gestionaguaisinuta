@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\SanitizesSearchInput;
+use App\Http\Requests\StoreMultaRequest;
 use App\Models\Afiliado;
 use App\Models\Multa;
 use App\Services\GestionAguaService;
@@ -12,11 +14,15 @@ use Inertia\Response;
 
 class MultaController extends Controller
 {
+    use SanitizesSearchInput;
+
     public function __construct(private GestionAguaService $gestionAgua) {}
 
     public function index(Request $request): Response
     {
-        $q = $request->input('q');
+        $this->authorize('viewAny', Multa::class);
+
+        $q = $this->sanitizeSearchInput($request->input('q'));
         $estado = $request->input('estado');
 
         $multas = Multa::query()
@@ -38,6 +44,8 @@ class MultaController extends Controller
 
     public function create(Request $request): Response
     {
+        $this->authorize('create', Multa::class);
+
         $afiliado = $request->input('afiliado_id')
             ? Afiliado::find($request->input('afiliado_id'))
             : null;
@@ -52,19 +60,10 @@ class MultaController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreMultaRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'afiliado_id' => 'required|exists:afiliados,id',
-            'tipo' => 'required|in:trimestral,anual,otro',
-            'monto' => 'required|numeric|min:0.01',
-            'meses_mora' => 'nullable|integer|min:0',
-            'fecha_aplicacion' => 'required|date',
-            'observaciones' => 'nullable|string',
-        ]);
-
         Multa::create([
-            ...$data,
+            ...$request->validated(),
             'usuario_id' => $request->user()->id,
             'estado' => 'pendiente',
         ]);
@@ -76,6 +75,8 @@ class MultaController extends Controller
 
     public function marcarPagada(Multa $multa): RedirectResponse
     {
+        $this->authorize('marcarPagada', $multa);
+
         $multa->update(['estado' => 'pagada']);
 
         return back()->with('success', 'Multa marcada como pagada.');

@@ -39,8 +39,11 @@ const imprimir = () => window.print();
             <div
                 class="isinuta-card w-full overflow-hidden border-2 border-primary/20 p-0 shadow-xl shadow-primary/10 print:border print:shadow-none"
             >
-                <div class="bg-gradient-to-r from-cyan-600 to-teal-600 px-8 py-6 text-center text-white">
-                    <Droplets class="mx-auto mb-2 size-10 opacity-90" />
+                <div
+                    class="relative overflow-hidden bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-600 px-8 py-8 text-center text-white"
+                >
+                    <div class="isinuta-water-waves opacity-60" aria-hidden="true" />
+                    <Droplets class="relative mx-auto mb-2 size-12 opacity-95" />
                     <h1 class="text-sm font-bold tracking-wide uppercase">
                         Asociación ISINUTA
                     </h1>

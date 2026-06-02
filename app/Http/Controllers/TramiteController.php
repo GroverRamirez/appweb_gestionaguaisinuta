@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RechazarTramiteRequest;
+use App\Http\Requests\StoreTramiteRequest;
 use App\Models\Afiliado;
 use App\Models\Tramite;
 use App\Services\GestionAguaService;
@@ -16,6 +18,8 @@ class TramiteController extends Controller
 
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Tramite::class);
+
         $estado = $request->input('estado');
 
         $tramites = Tramite::query()
@@ -33,6 +37,8 @@ class TramiteController extends Controller
 
     public function create(Request $request): Response
     {
+        $this->authorize('create', Tramite::class);
+
         $afiliado = $request->input('afiliado_id')
             ? Afiliado::find($request->input('afiliado_id'))
             : null;
@@ -48,6 +54,8 @@ class TramiteController extends Controller
 
     public function verificarDeudas(Afiliado $afiliado)
     {
+        $this->authorize('verificarDeudas', $afiliado);
+
         $deuda = $this->gestionAgua->calcularDeudaAfiliado($afiliado);
 
         return response()->json([
@@ -56,15 +64,9 @@ class TramiteController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTramiteRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'afiliado_id' => 'required|exists:afiliados,id',
-            'ci_nuevo' => 'required|string|max:20',
-            'nombres_nuevo' => 'required|string|max:255',
-            'apellidos_nuevo' => 'required|string|max:255',
-            'observaciones' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $afiliado = Afiliado::findOrFail($data['afiliado_id']);
         $deuda = $this->gestionAgua->calcularDeudaAfiliado($afiliado);
@@ -87,6 +89,8 @@ class TramiteController extends Controller
 
     public function aprobar(Request $request, Tramite $tramite): RedirectResponse
     {
+        $this->authorize('approve', $tramite);
+
         if ($tramite->estado !== Tramite::ESTADO_PENDIENTE) {
             return back()->with('error', 'El trámite ya fue resuelto.');
         }
@@ -110,11 +114,9 @@ class TramiteController extends Controller
         return back()->with('success', 'Trámite aprobado y titular actualizado.');
     }
 
-    public function rechazar(Request $request, Tramite $tramite): RedirectResponse
+    public function rechazar(RechazarTramiteRequest $request, Tramite $tramite): RedirectResponse
     {
-        $data = $request->validate([
-            'observaciones' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $tramite->update([
             'estado' => Tramite::ESTADO_RECHAZADO,

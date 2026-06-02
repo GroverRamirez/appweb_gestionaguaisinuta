@@ -47,6 +47,7 @@ const allNavItems: NavItemWithPermission[] = [
         href: '/reportes/recaudacion',
         icon: BarChart3,
         permission: 'reportes.ver',
+        matchPrefix: true,
     },
     {
         title: 'Gestión de usuarios',

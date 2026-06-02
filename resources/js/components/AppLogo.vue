@@ -4,7 +4,7 @@ import { Droplets } from 'lucide-vue-next';
 
 <template>
     <div
-        class="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-teal-600 shadow-lg shadow-cyan-500/25"
+        class="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-teal-600 shadow-lg shadow-cyan-500/30 ring-2 ring-white/20"
     >
         <Droplets class="size-5 text-white" />
     </div>

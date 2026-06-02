@@ -23,7 +23,7 @@ withDefaults(defineProps<Props>(), {
             class="isinuta-panel-bg min-w-0 flex-1 overflow-x-hidden"
         >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <div class="flex w-full max-w-none flex-1 flex-col p-4 md:p-6 lg:p-8">
+            <div class="flex w-full max-w-none flex-1 flex-col gap-3 p-3 md:p-4 lg:p-5">
                 <slot />
             </div>
         </AppContent>

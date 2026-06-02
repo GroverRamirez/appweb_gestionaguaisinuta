@@ -18,8 +18,6 @@ class DashboardController extends Controller
 
     public function index(Request $request): Response
     {
-        $this->gestionAgua->generarObligacionesMesActual();
-
         $hoy = now();
         $mes = (int) $hoy->format('n');
         $anio = (int) $hoy->format('Y');

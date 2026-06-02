@@ -14,8 +14,13 @@ function userWithRole(string $roleName): User
     $user = User::factory()->create(['role' => $roleName]);
     $role = Role::where('nombre', $roleName)->firstOrFail();
     $user->roles()->sync([$role->id]);
+    $user = $user->fresh();
 
-    return $user->fresh();
+    if ($roleName === Role::ADMIN) {
+        $user = enableTwoFactorFor($user);
+    }
+
+    return $user;
 }
 
 test('admin can access afiliados management and reportes de deudas', function () {

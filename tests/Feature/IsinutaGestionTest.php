@@ -31,9 +31,10 @@ test('user without role cannot access panel', function () {
 });
 
 test('admin can access panel and afiliados', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => Role::ADMIN]);
     $role = Role::firstOrCreate(['nombre' => Role::ADMIN], ['descripcion' => 'Admin']);
     $user->roles()->attach($role);
+    $user = enableTwoFactorFor($user->fresh());
 
     $this->actingAs($user)->get(route('panel'))->assertOk();
     $this->actingAs($user)->get(route('afiliados.index'))->assertOk();
@@ -63,9 +64,10 @@ test('can register monthly payment for afiliado', function () {
 });
 
 test('tramite requires no debts to approve', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => Role::ADMIN]);
     $role = Role::firstOrCreate(['nombre' => Role::ADMIN], ['descripcion' => 'Admin']);
     $user->roles()->attach($role);
+    $user = enableTwoFactorFor($user->fresh());
 
     $afiliado = Afiliado::factory()->create();
     app(GestionAguaService::class)->generarObligacionMensual(

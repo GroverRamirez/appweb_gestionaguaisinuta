@@ -6,11 +6,10 @@ use App\Http\Controllers\MultaController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Panel\DashboardController;
 use App\Http\Controllers\ReporteController;
-use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\TramiteController;
+use App\Http\Controllers\UsuarioAuditoriaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 
 Route::get('/', HomeController::class)->name('home');
 
@@ -37,8 +36,12 @@ Route::middleware(['auth', 'verified', 'role:admin,cajera,operador'])->group(fun
         Route::middleware('permission:pagos.gestionar')->group(function () {
             Route::get('pagos/crear', [PagoController::class, 'create'])->name('pagos.create');
             Route::post('pagos', [PagoController::class, 'store'])->name('pagos.store');
-            Route::get('pagos/buscar-afiliado', [PagoController::class, 'buscarAfiliado'])->name('pagos.buscar-afiliado');
-            Route::post('pagos/generar-mes', [PagoController::class, 'generarMes'])->name('pagos.generar-mes');
+            Route::get('pagos/buscar-afiliado', [PagoController::class, 'buscarAfiliado'])
+                ->middleware('throttle:60,1')
+                ->name('pagos.buscar-afiliado');
+            Route::post('pagos/generar-mes', [PagoController::class, 'generarMes'])
+                ->middleware('throttle:5,1')
+                ->name('pagos.generar-mes');
         });
 
         Route::get('pagos/{pago}', [PagoController::class, 'show'])->name('pagos.show');
@@ -56,7 +59,9 @@ Route::middleware(['auth', 'verified', 'role:admin,cajera,operador'])->group(fun
 
     Route::middleware('permission:tramites.ver')->group(function () {
         Route::get('tramites', [TramiteController::class, 'index'])->name('tramites.index');
-        Route::get('tramites/verificar/{afiliado}', [TramiteController::class, 'verificarDeudas'])->name('tramites.verificar');
+        Route::get('tramites/verificar/{afiliado}', [TramiteController::class, 'verificarDeudas'])
+            ->middleware('throttle:60,1')
+            ->name('tramites.verificar');
 
         Route::middleware('permission:tramites.gestionar')->group(function () {
             Route::get('tramites/crear', [TramiteController::class, 'create'])->name('tramites.create');
@@ -79,6 +84,7 @@ Route::middleware(['auth', 'verified', 'role:admin,cajera,operador'])->group(fun
     });
 
     Route::middleware('permission:usuarios.gestionar')->group(function () {
+        Route::get('usuarios/auditoria', [UsuarioAuditoriaController::class, 'index'])->name('usuarios.auditoria');
         Route::get('usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
         Route::get('usuarios/crear', [UsuarioController::class, 'create'])->name('usuarios.create');
         Route::post('usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
@@ -86,10 +92,6 @@ Route::middleware(['auth', 'verified', 'role:admin,cajera,operador'])->group(fun
         Route::put('usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
         Route::patch('usuarios/{usuario}/estado', [UsuarioController::class, 'updateEstado'])->name('usuarios.update-estado');
     });
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
 });
 
 require __DIR__.'/settings.php';

@@ -72,6 +72,15 @@ class FortifyServiceProvider extends ServiceProvider
                 ]);
             }
 
+            $user->syncRolesFromLegacyColumn();
+            $user->ensureRolesHavePermissions();
+
+            if (! $user->canAccessPanel()) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => ['Su cuenta no tiene permiso para acceder al sistema.'],
+                ]);
+            }
+
             return $user;
         });
     }

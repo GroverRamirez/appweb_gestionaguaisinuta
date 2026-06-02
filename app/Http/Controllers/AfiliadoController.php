@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\SanitizesSearchInput;
+use App\Http\Requests\StoreAfiliadoRequest;
+use App\Http\Requests\UpdateAfiliadoRequest;
 use App\Models\Afiliado;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -9,12 +12,17 @@ use Inertia\Response;
 
 class AfiliadoController extends Controller
 {
+    use SanitizesSearchInput;
+
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Afiliado::class);
+
         $query = Afiliado::query();
 
-        if ($request->filled('busqueda')) {
-            $busqueda = $request->string('busqueda')->toString();
+        $busqueda = $this->sanitizeSearchInput($request->input('busqueda'));
+
+        if ($busqueda !== null) {
             $query->where(function ($q) use ($busqueda) {
                 $q->where('nombres', 'like', "%{$busqueda}%")
                     ->orWhere('apellidos', 'like', "%{$busqueda}%")
@@ -26,7 +34,7 @@ class AfiliadoController extends Controller
 
         return Inertia::render('Afiliados/Index', [
             'afiliados' => $afiliados,
-            'filtros' => $request->only('busqueda'),
+            'filtros' => ['busqueda' => $busqueda],
             'resumen' => [
                 'total' => Afiliado::query()->count(),
                 'activos' => Afiliado::query()->where('estado', 'activo')->count(),
@@ -37,68 +45,38 @@ class AfiliadoController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', Afiliado::class);
+
         return Inertia::render('Afiliados/Create');
     }
 
-    public function store(Request $request)
+    public function store(StoreAfiliadoRequest $request)
     {
-        $validated = $request->validate([
-            'ci' => 'required|string|unique:afiliados,ci|max:20',
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'direccion' => 'nullable|string',
-            'fecha_afiliacion' => 'nullable|date',
-            'estado' => 'nullable|string|in:activo,inactivo',
-        ], [], [
-            'ci' => 'cédula de identidad',
-            'nombres' => 'nombres',
-            'apellidos' => 'apellidos',
-            'telefono' => 'teléfono',
-            'direccion' => 'dirección',
-            'fecha_afiliacion' => 'fecha de afiliación',
-            'estado' => 'estado',
-        ]);
-
-        Afiliado::create($validated);
+        Afiliado::create($request->validated());
 
         return redirect()->route('afiliados.index')->with('success', 'Afiliado registrado exitosamente.');
     }
 
     public function edit(Afiliado $afiliado): Response
     {
+        $this->authorize('update', $afiliado);
+
         return Inertia::render('Afiliados/Edit', [
             'afiliado' => $afiliado,
         ]);
     }
 
-    public function update(Request $request, Afiliado $afiliado)
+    public function update(UpdateAfiliadoRequest $request, Afiliado $afiliado)
     {
-        $validated = $request->validate([
-            'ci' => 'required|string|max:20|unique:afiliados,ci,'.$afiliado->id,
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'direccion' => 'nullable|string',
-            'fecha_afiliacion' => 'nullable|date',
-            'estado' => 'nullable|string|in:activo,inactivo',
-        ], [], [
-            'ci' => 'cédula de identidad',
-            'nombres' => 'nombres',
-            'apellidos' => 'apellidos',
-            'telefono' => 'teléfono',
-            'direccion' => 'dirección',
-            'fecha_afiliacion' => 'fecha de afiliación',
-            'estado' => 'estado',
-        ]);
-
-        $afiliado->update($validated);
+        $afiliado->update($request->validated());
 
         return redirect()->route('afiliados.index')->with('success', 'Datos del afiliado actualizados exitosamente.');
     }
 
     public function destroy(Afiliado $afiliado)
     {
+        $this->authorize('delete', $afiliado);
+
         $afiliado->delete();
 
         return redirect()->route('afiliados.index')->with('success', 'Afiliado eliminado correctamente.');
