@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { AlertTriangle, ClipboardList, User } from 'lucide-vue-next';
+import InputError from '@/components/InputError.vue';
 import AfiliadoSearch from '@/components/isinuta/AfiliadoSearch.vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
-import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, ClipboardList, User } from 'lucide-vue-next';
 
 const props = defineProps<{
     afiliado: { id: number; ci: string; nombres: string; apellidos: string } | null;
@@ -34,6 +34,7 @@ const submit = () => {
     if (!props.sin_deudas) {
         return;
     }
+
     form.post('/tramites');
 };
 </script>

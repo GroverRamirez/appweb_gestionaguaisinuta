@@ -49,6 +49,7 @@ const puedeEntrar = computed(() => {
     };
     const roles = auth?.roles ?? [];
     const permisos = auth?.permisos ?? auth?.permissions ?? [];
+
     return (
         roles.includes('admin') ||
         roles.includes('cajera') ||

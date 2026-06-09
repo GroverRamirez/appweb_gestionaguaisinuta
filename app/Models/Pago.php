@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\PagoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Pago extends Model
 {
-    /** @use HasFactory<\Database\Factories\PagoFactory> */
+    /** @use HasFactory<PagoFactory> */
     use HasFactory;
 
     public const MONTO_AGUA = 8.00;
@@ -18,6 +20,8 @@ class Pago extends Model
     public const ESTADO_PENDIENTE = 'pendiente';
 
     public const ESTADO_PAGADO = 'pagado';
+
+    private const SECUENCIA_RECIBOS = 'pagos';
 
     protected $fillable = [
         'numero_recibo',
@@ -56,13 +60,69 @@ class Pago extends Model
 
     public static function siguienteNumero(): string
     {
-        $ultimo = static::query()
+        return static::formatearNumeroRecibo(static::siguienteNumeroDisponible());
+    }
+
+    public static function reservarSiguienteNumeroRecibo(): string
+    {
+        return DB::transaction(function (): string {
+            static::asegurarSecuenciaRecibos();
+
+            $secuencia = DB::table('secuencias_recibos')
+                ->where('nombre', self::SECUENCIA_RECIBOS)
+                ->lockForUpdate()
+                ->first();
+
+            $numero = max(
+                (int) $secuencia->siguiente_numero,
+                static::mayorNumeroReciboAsignado() + 1,
+            );
+
+            DB::table('secuencias_recibos')
+                ->where('nombre', self::SECUENCIA_RECIBOS)
+                ->update([
+                    'siguiente_numero' => $numero + 1,
+                    'updated_at' => now(),
+                ]);
+
+            return static::formatearNumeroRecibo($numero);
+        }, attempts: 5);
+    }
+
+    private static function siguienteNumeroDisponible(): int
+    {
+        $secuencia = DB::table('secuencias_recibos')
+            ->where('nombre', self::SECUENCIA_RECIBOS)
+            ->first();
+
+        if ($secuencia) {
+            return (int) $secuencia->siguiente_numero;
+        }
+
+        return static::mayorNumeroReciboAsignado() + 1;
+    }
+
+    private static function asegurarSecuenciaRecibos(): void
+    {
+        DB::table('secuencias_recibos')->insertOrIgnore([
+            'nombre' => self::SECUENCIA_RECIBOS,
+            'siguiente_numero' => static::mayorNumeroReciboAsignado() + 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private static function mayorNumeroReciboAsignado(): int
+    {
+        return static::query()
             ->whereNotNull('numero_recibo')
-            ->orderByDesc('id')
-            ->value('numero_recibo');
+            ->pluck('numero_recibo')
+            ->map(fn (string $numeroRecibo): int => (int) preg_replace('/\D/', '', $numeroRecibo))
+            ->max() ?? 0;
+    }
 
-        $numero = $ultimo ? (int) preg_replace('/\D/', '', $ultimo) + 1 : 1;
-
+    private static function formatearNumeroRecibo(int $numero): string
+    {
         return 'REC-'.str_pad((string) $numero, 6, '0', STR_PAD_LEFT);
     }
 }

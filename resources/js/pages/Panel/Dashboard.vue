@@ -1,12 +1,4 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import DataCard from '@/components/isinuta/DataCard.vue';
-import FlashBanner from '@/components/isinuta/FlashBanner.vue';
-import QuickActionCard from '@/components/isinuta/QuickActionCard.vue';
-import TwoFactorRequiredBanner from '@/components/isinuta/TwoFactorRequiredBanner.vue';
-import StatCard from '@/components/isinuta/StatCard.vue';
-import { Button } from '@/components/ui/button';
-import type { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     AlertTriangle,
@@ -18,6 +10,14 @@ import {
     Users,
 } from 'lucide-vue-next';
 import { computed, withDefaults } from 'vue';
+import DataCard from '@/components/isinuta/DataCard.vue';
+import FlashBanner from '@/components/isinuta/FlashBanner.vue';
+import QuickActionCard from '@/components/isinuta/QuickActionCard.vue';
+import StatCard from '@/components/isinuta/StatCard.vue';
+import TwoFactorRequiredBanner from '@/components/isinuta/TwoFactorRequiredBanner.vue';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types';
 
 const props = withDefaults(
     defineProps<{

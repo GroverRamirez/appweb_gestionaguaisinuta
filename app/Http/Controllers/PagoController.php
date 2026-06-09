@@ -9,6 +9,7 @@ use App\Models\Pago;
 use App\Services\GestionAguaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -95,20 +96,31 @@ class PagoController extends Controller
     {
         $data = $request->validated();
 
-        $pago = Pago::findOrFail($data['pago_id']);
+        $pago = DB::transaction(function () use ($data, $request): ?Pago {
+            $pago = Pago::query()
+                ->whereKey($data['pago_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($pago->estado === Pago::ESTADO_PAGADO) {
+            if ($pago->estado === Pago::ESTADO_PAGADO) {
+                return null;
+            }
+
+            $pago->update([
+                'numero_recibo' => Pago::reservarSiguienteNumeroRecibo(),
+                'usuario_id' => $request->user()->id,
+                'fecha_pago' => $data['fecha_pago'],
+                'metodo' => $data['metodo'],
+                'estado' => Pago::ESTADO_PAGADO,
+                'observaciones' => $data['observaciones'] ?? null,
+            ]);
+
+            return $pago;
+        }, attempts: 5);
+
+        if ($pago === null) {
             return back()->with('error', 'Este período ya fue pagado.');
         }
-
-        $pago->update([
-            'numero_recibo' => Pago::siguienteNumero(),
-            'usuario_id' => $request->user()->id,
-            'fecha_pago' => $data['fecha_pago'],
-            'metodo' => $data['metodo'],
-            'estado' => Pago::ESTADO_PAGADO,
-            'observaciones' => $data['observaciones'] ?? null,
-        ]);
 
         return redirect()
             ->route('pagos.show', $pago)

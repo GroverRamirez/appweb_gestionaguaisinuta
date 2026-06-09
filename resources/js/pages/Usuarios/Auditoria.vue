@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowLeft, ClipboardList } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
 import PaginationLinks from '@/components/isinuta/PaginationLinks.vue';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ClipboardList } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
 
 type Actor = { id: number; name: string; email: string };
 type Registro = {

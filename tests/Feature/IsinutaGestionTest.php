@@ -63,6 +63,66 @@ test('can register monthly payment for afiliado', function () {
     expect($pago->fresh()->numero_recibo)->not->toBeNull();
 });
 
+test('receipt numbers continue sequentially when old pending payments are charged', function () {
+    $user = User::factory()->create();
+    $role = Role::where('nombre', Role::CAJERA)->firstOrFail();
+    $user->roles()->sync([$role->id]);
+
+    $afiliado = Afiliado::factory()->create(['estado' => 'activo']);
+
+    $pagoAntiguo = Pago::create([
+        'afiliado_id' => $afiliado->id,
+        'mes' => 1,
+        'anio' => 2026,
+        'monto_agua' => Pago::MONTO_AGUA,
+        'monto_alcantarillado' => Pago::MONTO_ALCANTARILLADO,
+        'total' => Pago::MONTO_AGUA + Pago::MONTO_ALCANTARILLADO,
+        'estado' => Pago::ESTADO_PENDIENTE,
+    ]);
+
+    Pago::create([
+        'numero_recibo' => 'REC-000010',
+        'afiliado_id' => $afiliado->id,
+        'mes' => 2,
+        'anio' => 2026,
+        'monto_agua' => Pago::MONTO_AGUA,
+        'monto_alcantarillado' => Pago::MONTO_ALCANTARILLADO,
+        'total' => Pago::MONTO_AGUA + Pago::MONTO_ALCANTARILLADO,
+        'fecha_pago' => now()->toDateString(),
+        'metodo' => 'efectivo',
+        'estado' => Pago::ESTADO_PAGADO,
+    ]);
+
+    $pagoNuevo = Pago::create([
+        'afiliado_id' => $afiliado->id,
+        'mes' => 3,
+        'anio' => 2026,
+        'monto_agua' => Pago::MONTO_AGUA,
+        'monto_alcantarillado' => Pago::MONTO_ALCANTARILLADO,
+        'total' => Pago::MONTO_AGUA + Pago::MONTO_ALCANTARILLADO,
+        'estado' => Pago::ESTADO_PENDIENTE,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('pagos.store'), [
+            'pago_id' => $pagoAntiguo->id,
+            'fecha_pago' => now()->toDateString(),
+            'metodo' => 'efectivo',
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($user)
+        ->post(route('pagos.store'), [
+            'pago_id' => $pagoNuevo->id,
+            'fecha_pago' => now()->toDateString(),
+            'metodo' => 'efectivo',
+        ])
+        ->assertRedirect();
+
+    expect($pagoAntiguo->fresh()->numero_recibo)->toBe('REC-000011');
+    expect($pagoNuevo->fresh()->numero_recibo)->toBe('REC-000012');
+});
+
 test('tramite requires no debts to approve', function () {
     $user = User::factory()->create(['role' => Role::ADMIN]);
     $role = Role::firstOrCreate(['nombre' => Role::ADMIN], ['descripcion' => 'Admin']);

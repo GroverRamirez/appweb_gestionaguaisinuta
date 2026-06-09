@@ -1,693 +1,153 @@
-# Guía paso a paso — Desarrollar ISINUTA desde cero con OpenCode
+# Guia paso a paso para desarrollar ISINUTA con OpenCode
 
-**Sistema web para la gestión administrativa de la Asociación de Agua Potable y Alcantarillado ISINUTA**  
-Villa Tunari, Bolivia — Carrera Sistemas Informáticos
+**Aplicacion:** `appweb_gestionaguaisinuta`
+**Proyecto:** Sistema web para la gestion administrativa de la Asociacion de Agua Potable y Alcantarillado ISINUTA
+**Stack:** Laravel 13, PHP 8.3, Fortify, Inertia v3, Vue 3, Tailwind CSS v4, Wayfinder, Pest 4, MySQL
 
-Esta guía está pensada para estudiantes que construirán la aplicación **módulo por módulo**, usando **OpenCode** como asistente de desarrollo. El proyecto de referencia ya existe en este repositorio; pueden usarlo como modelo o reconstruirlo siguiendo estos pasos.
+Esta guia esta pensada para desarrollar la aplicacion con OpenCode de forma progresiva, explicada y verificable. Puedes usarla de dos formas:
 
----
+1. Reconstruir el sistema desde cero por fases.
+2. Continuar mejorando el proyecto existente sin romper sus convenciones.
 
-## Tabla de contenidos
-
-1. [Qué vas a construir](#1-qué-vas-a-construir)
-2. [Requisitos previos](#2-requisitos-previos)
-3. [Configurar el entorno](#3-configurar-el-entorno)
-4. [Configurar OpenCode](#4-configurar-opencode)
-5. [Cómo trabajar con OpenCode (reglas de clase)](#5-cómo-trabajar-con-opencode-reglas-de-clase)
-6. [Plan de desarrollo por fases](#6-plan-de-desarrollo-por-fases)
-7. [Fase 0 — Proyecto base Laravel + Inertia](#fase-0--proyecto-base-laravel--inertia)
-8. [Fase 1 — Autenticación con Fortify](#fase-1--autenticación-con-fortify)
-9. [Fase 2 — Roles, permisos y usuarios (RBAC)](#fase-2--roles-permisos-y-usuarios-rbac)
-10. [Fase 3 — Afiliados](#fase-3--afiliados)
-11. [Fase 4 — Pagos mensuales](#fase-4--pagos-mensuales)
-12. [Fase 5 — Multas](#fase-5--multas)
-13. [Fase 6 — Trámites (cambio de titular)](#fase-6--trámites-cambio-de-titular)
-14. [Fase 7 — Reportes y panel](#fase-7--reportes-y-panel)
-15. [Fase 8 — Pulido, tests y entrega](#fase-8--pulido-tests-y-entrega)
-16. [Laboratorios de seguridad (6 sesiones)](#16-laboratorios-de-seguridad-6-sesiones)
-17. [Checklist final del proyecto](#17-checklist-final-del-proyecto)
-18. [Recursos del repositorio](#18-recursos-del-repositorio)
+La regla principal es simple: **OpenCode ayuda a programar, pero el estudiante debe leer, ejecutar pruebas y explicar cada cambio.**
 
 ---
 
-## 1. Qué vas a construir
+## 1. Contexto del sistema
 
-Un portal **interno** (oficina/caja) para:
+ISINUTA es una aplicacion interna para oficina/caja. No es un portal publico para afiliados.
 
-| Módulo | Función principal |
-|--------|-------------------|
-| **Panel** | Resumen de indicadores |
-| **Afiliados** | Registrar titulares del servicio de agua |
-| **Pagos** | Cuotas mensuales (agua + alcantarillado) |
-| **Multas** | Registrar y cobrar multas |
-| **Trámites** | Cambio de titular con verificación de deudas |
-| **Reportes** | Recaudación, deudas, listado de afiliados |
-| **Usuarios** | Solo el admin crea y gestiona cuentas del sistema |
+Modulos principales:
 
-### Stack obligatorio
+| Modulo | Que resuelve |
+| --- | --- |
+| Panel | Indicadores generales del sistema |
+| Afiliados | Registro de titulares del servicio |
+| Pagos | Cuotas mensuales de agua y alcantarillado |
+| Multas | Registro y cobro de multas |
+| Tramites | Cambio de titular con verificacion de deudas |
+| Reportes | Recaudacion, deudas y afiliados |
+| Usuarios | Administracion de usuarios, roles y permisos |
 
-| Capa | Tecnología |
-|------|------------|
-| Backend | PHP 8.3, Laravel 13 |
-| Auth | Laravel Fortify |
-| Frontend | Inertia.js v3 + Vue 3 + Tailwind CSS v4 |
-| Rutas tipadas | Laravel Wayfinder |
-| Tests | Pest 4 |
-| Base de datos | MySQL (Laragon) o SQLite (desarrollo) |
+Reglas de negocio clave:
 
-### Reglas de negocio clave
-
-- Tarifa mensual fija: **Bs 8.00** (agua) + **Bs 15.00** (alcantarillado) = **Bs 23.00**
-- **No hay registro público**: solo el administrador crea usuarios
-- Tres roles: `admin`, `cajera`, `operador`
-- La cajera opera el día a día; el admin tiene acceso total
+| Regla | Valor |
+| --- | --- |
+| Agua potable mensual | Bs 8.00 |
+| Alcantarillado mensual | Bs 15.00 |
+| Total mensual | Bs 23.00 |
+| Roles | `admin`, `cajera`, `operador` |
+| Registro publico | Deshabilitado |
+| Usuarios nuevos | Solo los crea el administrador |
+| Seguridad | Middleware backend + Form Request + tests |
 
 ---
 
-## 2. Requisitos previos
+## 2. Como iniciar una sesion con OpenCode
 
-Antes de empezar, el estudiante debe dominar o estar cursando:
+Usa este prompt al abrir una conversacion nueva en OpenCode. Esta guia debe ser el documento principal de trabajo; los demas archivos de prompts o skills son referencias internas del proyecto.
 
-- HTML, CSS, JavaScript básico
-- PHP y SQL (consultas, relaciones)
-- Conceptos de MVC
-- Git básico (clone, commit, push)
+```text
+Lee primero docs/GUIA_DESARROLLO_ISINUTA_OPENCODE.md.
+Usa AGENTS.md y opencode.json solo como reglas tecnicas del proyecto.
 
-### Software a instalar
+Contexto:
+- Proyecto: appweb_gestionaguaisinuta
+- Stack: Laravel 13, Fortify, Inertia v3, Vue 3, Tailwind v4, Wayfinder y Pest 4
+- Idioma de interfaz: espanol
+- Es una aplicacion interna para gestion de agua potable ISINUTA
 
-| Herramienta | Uso |
-|-------------|-----|
-| [Laragon](https://laragon.org/) | PHP, MySQL, entorno local |
-| [Git](https://git-scm.com/) | Control de versiones |
-| [Node.js LTS](https://nodejs.org/) | Vite y dependencias frontend |
-| [OpenCode](https://opencode.ai/) | Asistente IA para desarrollo |
-| Editor (VS Code / Cursor) | Edición de código |
+Antes de modificar codigo:
+1. Resume la arquitectura del proyecto.
+2. Identifica rutas, controladores, modelos, paginas Vue y tests existentes.
+3. Usa Laravel Boost search-docs si vas a tocar Laravel, Inertia, Fortify, Wayfinder o Pest.
+4. Propone un plan corto de 3 a 5 pasos.
 
----
-
-## 3. Configurar el entorno
-
-### Paso 3.1 — Clonar o copiar el proyecto
-
-```powershell
-cd C:\laragon\www
-git clone https://github.com/GroverRamirez/appweb_gestionaguaisinuta.git
-cd appweb_gestionaguaisinuta
+No agregues dependencias nuevas.
+No cambies convenciones del proyecto.
+No modifiques archivos fuera del alcance de la tarea.
 ```
 
-> Si empiezas **desde cero absoluto**, crea un proyecto Laravel con el starter kit Vue + Inertia (ver Fase 0).
+**Para que sirve:** obliga a OpenCode a leer el contexto del proyecto antes de escribir codigo.
 
-### Paso 3.2 — Instalar dependencias
+**Resultado esperado:** un resumen del sistema y un plan antes de implementar.
+
+---
+
+## 3. Plantilla de prompt para cualquier tarea
+
+Copia esta plantilla y rellena los campos.
+
+```text
+Contexto: app Laravel ISINUTA, modulo [NOMBRE_DEL_MODULO].
+
+Objetivo:
+[Describe en una frase la funcionalidad que quieres crear, corregir o mejorar.]
+
+Roles y permisos:
+- Admin: [puede/no puede]
+- Cajera: [puede/no puede]
+- Operador: [puede/no puede]
+- Permiso requerido: [ej. pagos.gestionar]
+
+Restricciones tecnicas:
+- Seguir AGENTS.md.
+- Usar Form Request con authorize() si hay validacion.
+- Proteger rutas con middleware permission o role.
+- Reutilizar componentes existentes de resources/js/components.
+- Usar Wayfinder en Vue, no URLs hardcodeadas.
+- Crear o actualizar tests Pest.
+- Ejecutar pruebas enfocadas al final.
+
+Archivos a revisar antes de editar:
+[Lista controladores, modelos, paginas Vue, rutas o tests relacionados.]
+
+Entrega esperada:
+1. Plan breve.
+2. Cambios implementados.
+3. Tests ejecutados.
+4. Instrucciones para probar en navegador.
+```
+
+**Para que sirve:** evita prompts vagos como "haz el modulo pagos" y obliga a definir permisos, pruebas y alcance.
+
+---
+
+## 4. Flujo de trabajo recomendado
+
+Para cada fase, sigue este ciclo:
+
+```text
+1. Pedir a OpenCode que explore el codigo.
+2. Pedir un plan corto.
+3. Implementar solo una parte pequena.
+4. Ejecutar tests.
+5. Revisar en navegador.
+6. Hacer commit.
+7. Pasar a la siguiente parte.
+```
+
+Comandos utiles:
 
 ```powershell
+# Instalar dependencias
 composer install
 npm install
+
+# Configurar entorno
 copy .env.example .env
 php artisan key:generate
-```
-
-### Paso 3.3 — Configurar base de datos
-
-Edita `.env`:
-
-```env
-APP_NAME=ISINUTA
-APP_URL=http://127.0.0.1:8010
-APP_LOCALE=es
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=gestionaguaisinuta
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Crea la base de datos en Laragon (HeidiSQL o phpMyAdmin):
-
-```sql
-CREATE DATABASE gestionaguaisinuta CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### Paso 3.4 — Migrar y sembrar datos demo
-
-```powershell
-php artisan migrate:fresh --seed
-php artisan isinuta:sync-roles
-```
-
-### Paso 3.5 — Iniciar servidores de desarrollo
-
-```powershell
-composer run dev
-```
-
-| Servicio | URL / Puerto |
-|----------|--------------|
-| Laravel | http://127.0.0.1:8010 |
-| Vite (hot reload) | puerto 5175 |
-
-### Usuarios demo (después del seed)
-
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| Administrador | admin@isinuta.test | admin1234 |
-| Cajera | cajera@isinuta.test | cajera1234 |
-| Operador | operador@isinuta.test | operador1234 |
-
-### Verificación rápida
-
-```powershell
-php artisan test --compact
-php artisan route:list --except-vendor
-```
-
-Si los tests pasan y la URL carga la página de bienvenida, el entorno está listo.
-
----
-
-## 4. Configurar OpenCode
-
-OpenCode ya está configurado en este proyecto mediante `opencode.json`:
-
-```json
-{
-  "mcp": {
-    "laravel-boost": {
-      "type": "local",
-      "enabled": true,
-      "command": ["php", "artisan", "boost:mcp"]
-    }
-  }
-}
-```
-
-### Paso 4.1 — Abrir el proyecto en OpenCode
-
-1. Abre OpenCode.
-2. Selecciona la carpeta `C:\laragon\www\appweb_gestionaguaisinuta`.
-3. Verifica que Laravel Boost MCP esté activo (consulta docs, esquema BD, rutas).
-
-### Paso 4.2 — Cargar contexto del proyecto
-
-Copia el contenido de `PROMPT_OPENCODE_ISINUTA.txt` en la primera conversación o pídele a OpenCode:
-
-```text
-Lee AGENTS.md y PROMPT_OPENCODE_ISINUTA.txt de este proyecto.
-Resume el stack, módulos y convenciones antes de que empecemos a desarrollar.
-Responde en español.
-```
-
-### Paso 4.3 — Skills disponibles
-
-OpenCode puede activar skills en `.agents/skills/`:
-
-| Skill | Cuándo usarlo |
-|-------|---------------|
-| `opencode-seguridad-usuarios` | Auth, roles, permisos, usuarios |
-| `fortify-development` | Login, 2FA, Fortify |
-| `laravel-best-practices` | Controladores, modelos, middleware |
-| `inertia-vue-development` | Páginas Vue, formularios Inertia |
-| `wayfinder-development` | Rutas tipadas `@/routes` |
-| `pest-testing` | Escribir y ejecutar tests |
-| `tailwindcss-development` | Estilos y layout responsive |
-
----
-
-## 5. Cómo trabajar con OpenCode (reglas de clase)
-
-### Regla de oro
-
-> **OpenCode escribe código; tú eres responsable de entenderlo, probarlo y defenderlo.**
-
-### Plantilla de prompt (usar en cada tarea)
-
-```text
-Contexto: app Laravel ISINUTA, módulo [NOMBRE].
-Objetivo: [crear / editar / proteger] [funcionalidad concreta].
-Roles permitidos: admin [sí/no], cajera [sí/no], operador [sí/no].
-Permiso requerido: [ej. pagos.gestionar].
-Restricciones:
-- Form Request con authorize()
-- Middleware en rutas
-- Test Pest que demuestre 200 admin y 403 cajera
-- No modificar archivos fuera de [lista]
-- Interfaz en español
-Al terminar: lista archivos cambiados, comando de test y pasos para probar en navegador.
-```
-
-### Flujo de trabajo por tarea
-
-```
-1. Entender     → ¿Qué pide el requerimiento?
-2. Explorar     → Leer controlador, modelo, Vue y tests existentes
-3. Pedir plan   → OpenCode propone 3–5 pasos antes de codificar
-4. Implementar  → Diff mínimo, reutilizar componentes
-5. Probar       → php artisan test --compact --filter=...
-6. Verificar UI → composer run dev + login con rol adecuado
-7. Commit       → git add + git commit con mensaje claro
-```
-
-### Lo que NO debes hacer
-
-- Copiar código sin leerlo ni probarlo
-- Confiar solo en ocultar botones en Vue (la seguridad va en el **backend**)
-- Hardcodear URLs (`/pagos/crear`) — usa Wayfinder (`@/routes`)
-- Saltarte los tests
-- Activar registro público de usuarios
-
-### Autenticación ≠ Autorización
-
-| Concepto | Pregunta que responde | Ejemplo |
-|----------|----------------------|---------|
-| **Autenticación** | ¿Quién eres? | Login con email/contraseña |
-| **Autorización** | ¿Qué puedes hacer? | Cajera no entra a `/usuarios` |
-| **UI** | ¿Qué se muestra? | Sidebar oculta enlaces sin permiso |
-
----
-
-## 6. Plan de desarrollo por fases
-
-Duración estimada: **12–16 semanas** (1 módulo por 1–2 semanas).
-
-| Semana | Fase | Entregable |
-|--------|------|------------|
-| 1 | Fase 0 | Proyecto Laravel + Inertia corriendo |
-| 2 | Fase 1 | Login funcional, sin registro público |
-| 3–4 | Fase 2 | RBAC completo + gestión usuarios + 6 labs |
-| 5 | Fase 3 | CRUD afiliados |
-| 6–7 | Fase 4 | Pagos + generación mensual |
-| 8 | Fase 5 | Multas |
-| 9–10 | Fase 6 | Trámites + aprobación admin |
-| 11 | Fase 7 | Reportes + panel |
-| 12 | Fase 8 | Tests, documentación, demo |
-
----
-
-## Fase 0 — Proyecto base Laravel + Inertia
-
-**Objetivo:** Tener la estructura mínima del portal con layout, sidebar y página de bienvenida.
-
-### Pasos
-
-1. Crear proyecto Laravel 13 con starter kit Vue + Inertia (o clonar este repo).
-2. Configurar `.env`, locale `es`, Tailwind v4.
-3. Crear layout `AppSidebarLayout` con menú lateral.
-4. Página `Welcome.vue` con botón "Iniciar sesión" (sin registro).
-5. Verificar que `composer run dev` levanta Laravel + Vite.
-
-### Prompt OpenCode
-
-```text
-Estoy empezando ISINUTA desde cero con Laravel 13 + Inertia v3 + Vue 3.
-Ayúdame a verificar que el starter kit está bien configurado:
-- Layout con sidebar para el panel
-- Página Welcome en español con solo "Iniciar sesión"
-- APP_LOCALE=es
-Lista qué archivos revisar y qué comandos ejecutar.
-No agregues dependencias nuevas.
-```
-
-### Criterio de aceptación
-
-- [ ] http://127.0.0.1:8010 carga la bienvenida
-- [ ] Existe layout reutilizable para el panel
-- [ ] Textos en español
-
----
-
-## Fase 1 — Autenticación con Fortify
-
-**Objetivo:** Login seguro con Fortify. Sin registro público.
-
-### Pasos
-
-1. Instalar/configurar Laravel Fortify.
-2. Deshabilitar `Features::registration()` en `config/fortify.php`.
-3. Páginas de login en Vue (`resources/js/pages/auth/Login.vue`).
-4. Redirección post-login al panel (`/panel`).
-5. Habilitar verificación de email (opcional en desarrollo).
-6. Test: guest redirige a login; usuario autenticado accede al panel.
-
-### Archivos clave (referencia)
-
-- `config/fortify.php`
-- `app/Providers/FortifyServiceProvider.php`
-- `tests/Feature/AuthenticationTest.php`
-
-### Prompt OpenCode
-
-```text
-Configura autenticación Fortify en ISINUTA:
-- Login funcional
-- Registro público DESHABILITADO
-- Redirección al panel tras login
-- Tests Pest para login y logout
-Activa el skill fortify-development.
-Responde en español.
-```
-
-### Criterio de aceptación
-
-- [ ] Login con admin@isinuta.test funciona
-- [ ] No existe ruta/botón de registro público
-- [ ] `AuthenticationTest` pasa
-
----
-
-## Fase 2 — Roles, permisos y usuarios (RBAC)
-
-**Objetivo:** Sistema completo de autorización. Es la fase **más importante** para la clase.
-
-> Detalle ampliado en `.agents/skills/opencode-seguridad-usuarios/lab-guia.md`
-
-### Orden obligatorio de implementación
-
-```
-1. Migraciones: roles, permisos, rol_usuario, permiso_rol, estado en users
-2. Enum Permission + seeders (RolesSeeder, PermissionsSeeder, UsuariosSeeder)
-3. User: hasRole(), hasPermission(), isActivo()
-4. Middleware EnsureUserHasRole / EnsureUserHasPermission
-5. Rutas: auth → verified → role → permission
-6. Form Requests con authorize()
-7. UsuarioController (CRUD solo admin)
-8. Vistas Vue + usePermissions()
-9. Tests UsuarioGestionTest + RolePermissionsTest
-10. php artisan isinuta:sync-roles
-```
-
-### Mapa de permisos
-
-| Permiso | Admin | Cajera | Operador |
-|---------|:-----:|:------:|:--------:|
-| panel.ver | ✓ | ✓ | ✓ |
-| afiliados.ver | ✓ | ✓ | ✓ |
-| afiliados.gestionar | ✓ | ✗ | ✗ |
-| pagos.ver / pagos.gestionar | ✓ | ✓ | ✓ |
-| multas.ver / multas.gestionar | ✓ | ✓ | ✓ |
-| tramites.ver / tramites.gestionar | ✓ | ✓ | ✓ |
-| tramites.aprobar | ✓ | ✗ | ✗ |
-| reportes.ver | ✓ | ✓ | ✓ |
-| reportes.deudas | ✓ | ✗ | ✗ |
-| usuarios.gestionar | ✓ | ✗ | ✗ |
-
-### Prompt OpenCode (fase completa)
-
-```text
-Implementa RBAC en ISINUTA siguiendo el orden del skill opencode-seguridad-usuarios:
-1. Migraciones roles/permisos
-2. Enum Permission + seeders
-3. Middleware role y permission
-4. UsuarioController con CRUD (solo admin)
-5. Bloqueo login usuarios inactivos
-6. Tests Pest: admin 200, cajera 403 en /usuarios
-Activa skills: laravel-best-practices, pest-testing, inertia-vue-development.
-Ejecuta php artisan test --compact --filter=UsuarioGestionTest al final.
-```
-
-### Criterio de aceptación
-
-- [ ] Cajera recibe 403 en `/usuarios`
-- [ ] Admin crea/edita/desactiva usuarios
-- [ ] Usuario inactivo no puede hacer login
-- [ ] Admin no puede auto-desactivarse
-- [ ] Tests de seguridad pasan
-
----
-
-## Fase 3 — Afiliados
-
-**Objetivo:** CRUD de titulares del servicio de agua.
-
-### Pasos
-
-1. Migración `afiliados`: CI, nombres, apellidos, teléfono, dirección, fecha_afiliacion, estado.
-2. Modelo `Afiliado` con factory y relaciones.
-3. `AfiliadoController` + Form Requests.
-4. Rutas protegidas: `afiliados.ver` (listar), `afiliados.gestionar` (crear/editar/eliminar).
-5. Páginas Vue: `Index`, `Create`, `Edit`.
-6. Seeder con 3 afiliados demo.
-7. Tests: admin gestiona; cajera solo ve listado.
-
-### Prompt OpenCode
-
-```text
-Módulo Afiliados ISINUTA:
-- Migración, modelo, factory, AfiliadosSeeder
-- CRUD con permisos afiliados.ver y afiliados.gestionar
-- Páginas Vue Index/Create/Edit en español
-- Reutilizar PageHeader, FlashBanner, layout AppSidebarLayout
-- Tests Pest para admin y cajera
-Sigue convenciones de routes/web.php existente.
-```
-
-### Criterio de aceptación
-
-- [ ] Admin crea, edita y elimina afiliados
-- [ ] Cajera ve listado pero no puede crear (403 o botón oculto + ruta bloqueada)
-- [ ] Búsqueda/filtro en listado funciona
-
----
-
-## Fase 4 — Pagos mensuales
-
-**Objetivo:** Registrar y consultar pagos con tarifas fijas.
-
-### Pasos
-
-1. Migración `pagos`: afiliado_id, mes, anio, montos, estado, recibo, usuario_id.
-2. Constantes en modelo `Pago`: `MONTO_AGUA = 8.00`, `MONTO_ALCANTARILLADO = 15.00`.
-3. Servicio `GestionAguaService::generarObligacionMensual()`.
-4. Acciones: registrar pago, marcar pagado, generar cuotas del mes.
-5. Recibo autogenerado (`REC-000001`).
-6. Tests de generación mensual y permisos.
-
-### Prompt OpenCode
-
-```text
-Módulo Pagos ISINUTA:
-- Modelo Pago con tarifas fijas Bs 8 + Bs 15
-- GestionAguaService para generar obligaciones del mes
-- PagoController: index, create, store, show, generarMes
-- Permisos pagos.ver y pagos.gestionar
-- Tests Pest incluyendo generación masiva del mes
-```
-
-### Criterio de aceptación
-
-- [ ] Pago individual se registra correctamente
-- [ ] "Generar mes" crea cuotas pendientes para afiliados activos
-- [ ] Recibo con número correlativo
-- [ ] Total Bs 23.00 por período
-
----
-
-## Fase 5 — Multas
-
-**Objetivo:** Registrar multas y marcarlas como pagadas.
-
-### Pasos
-
-1. Migración `multas`: afiliado_id, tipo, monto, descripcion, estado, fecha.
-2. `MultaController` con permisos `multas.ver` / `multas.gestionar`.
-3. Acción `marcarPagada`.
-4. Vista listado + formulario de registro.
-
-### Prompt OpenCode
-
-```text
-Módulo Multas ISINUTA:
-- CRUD básico + marcar como pagada
-- Permisos multas.ver y multas.gestionar
-- Vue Index y Create en español
-- Test Pest: cajera puede registrar multa, operador igual
-```
-
-### Criterio de aceptación
-
-- [ ] Multa se registra vinculada a un afiliado
-- [ ] Se puede marcar como pagada
-- [ ] Listado con filtros básicos
-
----
-
-## Fase 6 — Trámites (cambio de titular)
-
-**Objetivo:** Solicitud y aprobación de cambio de titular con validación de deudas.
-
-### Pasos
-
-1. Migración `tramites`: afiliado_id, datos del nuevo titular, estado, observaciones.
-2. Estados: `pendiente`, `aprobado`, `rechazado`.
-3. Verificar deudas antes de crear trámite (`verificarDeudas`).
-4. Solo admin aprueba/rechaza (`tramites.aprobar`).
-5. Al aprobar: actualizar datos del afiliado.
-
-### Prompt OpenCode
-
-```text
-Módulo Trámites ISINUTA — cambio de titular:
-- Crear trámite solo si afiliado no tiene deudas pendientes
-- Cajera puede crear; solo admin aprueba/rechaza (tramites.aprobar)
-- TramiteController: index, create, store, aprobar, rechazar, verificarDeudas
-- Tests: cajera no puede aprobar (403), admin sí
-```
-
-### Criterio de aceptación
-
-- [ ] No se crea trámite si hay deudas
-- [ ] Admin aprueba y actualiza titular del afiliado
-- [ ] Cajera recibe 403 al intentar aprobar
-
----
-
-## Fase 7 — Reportes y panel
-
-**Objetivo:** Dashboard con indicadores y reportes administrativos.
-
-### Pasos
-
-1. `DashboardController`: totales de afiliados, pagos del mes, deudas, trámites pendientes.
-2. `ReporteController`:
-   - `/reportes/recaudacion` — permiso `reportes.ver`
-   - `/reportes/deudas` — permiso `reportes.deudas` (solo admin)
-   - `/reportes/afiliados` — permiso `reportes.deudas`
-3. Páginas Vue con tablas exportables (opcional: Excel/PDF).
-4. Sidebar filtra ítems según `usePermissions()`.
-
-### Prompt OpenCode
-
-```text
-Panel y Reportes ISINUTA:
-- Dashboard con indicadores (afiliados activos, recaudación mes, deudas, trámites pendientes)
-- Reportes recaudación, deudas y afiliados con permisos correctos
-- Solo admin accede a reportes.deudas
-- Tests RolePermissionsTest para verificar 403 cajera en deudas
-```
-
-### Criterio de aceptación
-
-- [ ] Panel muestra datos reales del seed
-- [ ] Cajera ve recaudación pero no reporte de deudas
-- [ ] Admin accede a todos los reportes
-
----
-
-## Fase 8 — Pulido, tests y entrega
-
-**Objetivo:** Proyecto estable, probado y presentable.
-
-### Pasos
-
-1. Ejecutar suite completa: `php artisan test --compact`
-2. Formatear PHP: `vendor/bin/pint --dirty --format agent`
-3. Revisar responsive en móvil (Tailwind).
-4. Auditoría de seguridad (Lab 5).
-5. Preparar demo con los 3 roles.
-6. Documentar instalación en README.
-
-### Prompt OpenCode
-
-```text
-Auditoría final ISINUTA:
-- Ejecuta php artisan test --compact y corrige fallos
-- Revisa N+1 en listados principales
-- Verifica que todas las rutas sensibles tienen middleware permission
-- Lista mejoras pendientes por prioridad
-Responde en español con informe breve.
-```
-
-### Criterio de aceptación
-
-- [ ] Todos los tests pasan (92+)
-- [ ] Demo fluida con admin, cajera y operador
-- [ ] Sin URLs hardcodeadas en Vue (Wayfinder)
-- [ ] Interfaz 100 % en español
-
----
-
-## 16. Laboratorios de seguridad (6 sesiones)
-
-Usa la guía detallada en:
-
-**`.agents/skills/opencode-seguridad-usuarios/lab-guia.md`**
-
-| Lab | Duración | Tema |
-|-----|----------|------|
-| Lab 1 | 45 min | Explorar autenticación Fortify |
-| Lab 2 | 60 min | Mapear RBAC, probar 403 |
-| Lab 3 | 60 min | Crear usuario como admin |
-| Lab 4 | 60 min | Estado activo/inactivo |
-| Lab 5 | 90 min | Auditoría de seguridad |
-| Lab 6 | 30 min | Rol en sidebar vs middleware |
-
-Cada lab incluye prompts listos para OpenCode y rúbrica de evaluación.
-
----
-
-## 17. Checklist final del proyecto
-
-### Funcional
-
-- [ ] Login/logout funcional
-- [ ] CRUD afiliados (admin)
-- [ ] Pagos + generación mensual
-- [ ] Multas
-- [ ] Trámites con aprobación admin
-- [ ] Reportes y panel
-- [ ] Gestión de usuarios (solo admin)
-
-### Seguridad
-
-- [ ] Registro público deshabilitado
-- [ ] Middleware en todas las rutas sensibles
-- [ ] Form Requests con `authorize()`
-- [ ] Usuarios inactivos bloqueados
-- [ ] Tests 403/200 por rol
-
-### Calidad
-
-- [ ] Tests Pest pasando
-- [ ] Código formateado con Pint
-- [ ] Wayfinder en frontend
-- [ ] Componentes reutilizables (`isinuta/*`)
-- [ ] Sin N+1 evidentes en listados
-
-### Entrega académica
-
-- [ ] Manual de instalación
-- [ ] Manual de usuario (capturas por rol)
-- [ ] Diagrama ER de base de datos
-- [ ] Video demo 5–10 min
-
----
-
-## 18. Recursos del repositorio
-
-| Recurso | Ruta | Uso |
-|---------|------|-----|
-| Reglas del proyecto | `AGENTS.md` | Convenciones obligatorias |
-| Prompt completo OpenCode | `PROMPT_OPENCODE_ISINUTA.txt` | Contexto para el agente |
-| Config OpenCode | `opencode.json` | MCP Laravel Boost |
-| Labs de seguridad | `.agents/skills/opencode-seguridad-usuarios/lab-guia.md` | 6 sesiones prácticas |
-| Referencia RBAC | `.agents/skills/opencode-seguridad-usuarios/reference.md` | Archivos y checklist |
-| Perfil académico | `perfil_proyecto.txt` | Contexto institucional ISINUTA |
-| Rutas del sistema | `routes/web.php` | Mapa de módulos |
-| Lógica de negocio | `app/Services/GestionAguaService.php` | Pagos, deudas, trámites |
-| Tests principales | `tests/Feature/` | UsuarioGestion, RolePermissions, IsinutaGestion |
-
-### Comandos de referencia rápida
-
-```powershell
-# Desarrollo
-composer run dev
 
 # Base de datos
 php artisan migrate:fresh --seed
 php artisan isinuta:sync-roles
 
+# Desarrollo
+composer run dev
+
 # Tests
 php artisan test --compact
+php artisan test --compact tests/Feature/IsinutaGestionTest.php
 php artisan test --compact --filter=UsuarioGestionTest
 
 # Formato PHP
@@ -699,34 +159,928 @@ php artisan route:list --except-vendor
 
 ---
 
-## Diagrama de arquitectura
+## 5. Fase 0 - Preparar el proyecto base
 
+**Objetivo:** tener Laravel, Inertia, Vue, Tailwind, base de datos y servidor local funcionando.
+
+### Prompt para OpenCode
+
+```text
+Quiero preparar el entorno local de ISINUTA.
+
+Revisa:
+- composer.json
+- package.json
+- .env.example
+- vite.config.ts
+- routes/web.php
+- opencode.json
+
+Necesito que me expliques paso a paso:
+1. Como instalar dependencias PHP y Node.
+2. Como configurar .env para Laragon y MySQL.
+3. Como ejecutar migraciones y seeders.
+4. Como iniciar la app con composer run dev.
+5. Que comandos usar para verificar que todo funciona.
+
+No modifiques codigo todavia. Solo dame instrucciones y valida la estructura actual.
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Navegador │────▶│   Laravel    │────▶│   MySQL     │
-│   Vue 3     │◀────│   Inertia    │◀────│   (datos)   │
-└─────────────┘     └──────────────┘     └─────────────┘
-                           │
-                    ┌──────┴──────┐
-                    │  Fortify    │  Autenticación
-                    │  Middleware │  Autorización (rol + permiso)
-                    │  Controllers│  Lógica HTTP
-                    │  Services   │  Reglas de negocio
-                    └─────────────┘
+
+### Explicacion
+
+Este prompt no pide codigo. Sirve para que el estudiante aprenda a levantar el sistema antes de desarrollar.
+
+### Verificacion
+
+```powershell
+php artisan migrate:fresh --seed
+php artisan test --compact
+composer run dev
 ```
 
 ---
 
-## Soporte docente
+## 6. Fase 1 - Bienvenida, layout y navegacion
 
-Para dudas sobre la guía o los laboratorios, revisar primero:
+**Objetivo:** tener una pantalla inicial en espanol, layout del panel y navegacion interna.
 
-1. Esta guía (`docs/GUIA_DESARROLLO_ISINUTA_OPENCODE.md`)
-2. Skill de seguridad (`.agents/skills/opencode-seguridad-usuarios/`)
-3. Tests como documentación viva (`tests/Feature/`)
+### Prompt para OpenCode
 
-**Recuerda:** OpenCode acelera el desarrollo, pero la comprensión de autenticación, autorización y reglas de negocio es lo que se evalúa en clase.
+```text
+Modulo base de interfaz ISINUTA.
+
+Objetivo:
+Revisar y mejorar la pantalla Welcome y el layout interno del panel.
+
+Revisa primero:
+- resources/js/pages/Welcome.vue
+- resources/js/layouts
+- resources/js/components/AppSidebar.vue
+- resources/js/components/isinuta
+- routes/web.php
+
+Requisitos:
+- La pagina Welcome debe mostrar solo acceso para iniciar sesion.
+- No debe existir boton de registro publico.
+- El layout interno debe reutilizar AppSidebar.
+- Los textos visibles deben estar en espanol.
+- No agregar dependencias.
+
+Entrega:
+1. Plan breve.
+2. Cambios minimos.
+3. Comando para verificar frontend.
+```
+
+### Explicacion
+
+Esta fase separa la pagina publica del panel privado. Tambien prepara la base visual para los modulos.
+
+### Verificacion
+
+```powershell
+npm run lint:check
+npm run build
+```
 
 ---
 
-*ISINUTA — Instituto Tecnológico Eterazama — Sistemas Informáticos — 2026*
+## 7. Fase 2 - Autenticacion con Fortify
+
+**Objetivo:** permitir login/logout, bloquear registro publico y redirigir al panel.
+
+### Prompt para OpenCode
+
+```text
+Modulo autenticacion ISINUTA con Laravel Fortify.
+
+Activa las skills:
+- fortify-development
+- laravel-best-practices
+- pest-testing
+
+Objetivo:
+Configurar autenticacion segura:
+- Login funcional.
+- Logout funcional.
+- Registro publico deshabilitado.
+- Redireccion al panel despues del login.
+- Usuarios inactivos no deben iniciar sesion si el proyecto ya tiene campo estado.
+
+Revisa:
+- config/fortify.php
+- app/Providers/FortifyServiceProvider.php
+- app/Http/Responses/LoginResponse.php si existe
+- resources/js/pages/auth/Login.vue
+- tests/Feature/Auth
+- routes/web.php
+
+Antes de codificar, usa search-docs para Fortify login y autenticacion personalizada.
+
+Tests requeridos:
+- Usuario puede iniciar sesion.
+- Usuario puede cerrar sesion.
+- Ruta de registro publico no esta disponible.
+- Usuario inactivo no puede iniciar sesion si aplica.
+
+Ejecuta:
+php artisan test --compact tests/Feature/Auth
+```
+
+### Explicacion
+
+Fortify controla la autenticacion. La gestion de usuarios del sistema se hara despues desde el panel de administrador, no con registro publico.
+
+### Verificacion
+
+```powershell
+php artisan route:list --except-vendor
+php artisan test --compact tests/Feature/Auth
+```
+
+---
+
+## 8. Fase 3 - Roles, permisos y usuarios
+
+**Objetivo:** implementar RBAC para controlar que puede hacer cada rol.
+
+Roles:
+
+| Rol | Uso |
+| --- | --- |
+| `admin` | Acceso total |
+| `cajera` | Operacion diaria |
+| `operador` | Similar a cajera, rol operativo |
+
+Permisos principales:
+
+| Permiso | Admin | Cajera | Operador |
+| --- | --- | --- | --- |
+| `panel.ver` | Si | Si | Si |
+| `afiliados.ver` | Si | Si | Si |
+| `afiliados.gestionar` | Si | No | No |
+| `pagos.ver` | Si | Si | Si |
+| `pagos.gestionar` | Si | Si | Si |
+| `multas.ver` | Si | Si | Si |
+| `multas.gestionar` | Si | Si | Si |
+| `tramites.ver` | Si | Si | Si |
+| `tramites.gestionar` | Si | Si | Si |
+| `tramites.aprobar` | Si | No | No |
+| `reportes.ver` | Si | Si | Si |
+| `reportes.deudas` | Si | No | No |
+| `usuarios.gestionar` | Si | No | No |
+
+### Prompt para OpenCode
+
+```text
+Modulo seguridad RBAC de ISINUTA.
+
+Activa las skills:
+- opencode-seguridad-usuarios
+- laravel-best-practices
+- pest-testing
+- inertia-vue-development
+
+Objetivo:
+Implementar o revisar el sistema de roles y permisos.
+
+Revisa primero:
+- app/Enums/Permission.php
+- app/Models/User.php
+- app/Models/Role.php
+- app/Models/Permission.php
+- app/Http/Middleware/EnsureUserHasRole.php
+- app/Http/Middleware/EnsureUserHasPermission.php
+- app/Http/Middleware/HandleInertiaRequests.php
+- routes/web.php
+- resources/js/composables/usePermissions.ts
+- resources/js/components/AppSidebar.vue
+- tests/Feature/RolePermissionsTest.php
+- tests/Feature/UsuarioGestionTest.php
+
+Requisitos:
+- Admin tiene todos los permisos.
+- Cajera y operador no pueden gestionar usuarios.
+- Cajera y operador no pueden aprobar tramites.
+- Cajera y operador no pueden ver reporte de deudas.
+- Las rutas deben estar protegidas en backend.
+- La UI puede ocultar menus, pero no reemplaza la seguridad backend.
+- Form Requests deben tener authorize() cuando corresponda.
+
+Tests obligatorios:
+- Admin accede a usuarios.
+- Cajera recibe 403 en usuarios.
+- Admin aprueba tramite.
+- Cajera recibe 403 al aprobar tramite.
+- Admin ve reporte de deudas.
+- Cajera recibe 403 en reporte de deudas.
+
+Ejecuta:
+php artisan isinuta:sync-roles
+php artisan test --compact tests/Feature/RolePermissionsTest.php
+php artisan test --compact tests/Feature/UsuarioGestionTest.php
+```
+
+### Explicacion
+
+Esta es la fase mas importante de seguridad. No basta con esconder botones en Vue. Cada accion sensible debe estar protegida por middleware, Form Request o ambos.
+
+### Verificacion
+
+```powershell
+php artisan isinuta:sync-roles
+php artisan test --compact tests/Feature/RolePermissionsTest.php
+php artisan test --compact tests/Feature/UsuarioGestionTest.php
+```
+
+Prueba manual:
+
+1. Login como `admin@isinuta.test`.
+2. Verificar que aparece Gestion de usuarios.
+3. Login como `cajera@isinuta.test`.
+4. Verificar que no aparece Gestion de usuarios.
+5. Intentar entrar manualmente a `/usuarios`; debe responder 403.
+
+---
+
+## 9. Fase 4 - Modulo Afiliados
+
+**Objetivo:** registrar, listar, buscar y actualizar afiliados.
+
+Campos principales:
+
+| Campo | Uso |
+| --- | --- |
+| CI | Identificacion del titular |
+| Nombres | Nombre del afiliado |
+| Apellidos | Apellidos del afiliado |
+| Telefono | Contacto |
+| Direccion | Ubicacion del servicio |
+| Fecha afiliacion | Fecha de ingreso |
+| Estado | Activo/inactivo |
+
+### Prompt para OpenCode
+
+```text
+Modulo Afiliados ISINUTA.
+
+Activa:
+- laravel-best-practices
+- inertia-vue-development
+- wayfinder-development
+- pest-testing
+
+Objetivo:
+Crear o mejorar el CRUD de afiliados.
+
+Revisa:
+- app/Models/Afiliado.php
+- app/Http/Controllers/AfiliadoController.php
+- app/Http/Requests/StoreAfiliadoRequest.php
+- app/Http/Requests/UpdateAfiliadoRequest.php
+- database/factories/AfiliadoFactory.php
+- resources/js/pages/Afiliados
+- resources/js/components/isinuta
+- routes/web.php
+- tests/Feature/IsinutaGestionTest.php
+
+Requisitos:
+- Admin puede crear, editar y eliminar afiliados.
+- Cajera puede ver afiliados, pero no gestionarlos si no tiene afiliados.gestionar.
+- Validar CI unico.
+- Validar campos obligatorios.
+- Usar rutas Wayfinder en Vue.
+- Listado con busqueda y paginacion si el proyecto ya lo usa.
+
+Tests:
+- Admin crea afiliado.
+- Cajera no puede crear afiliado.
+- Listado carga con permiso afiliados.ver.
+
+Ejecuta:
+php artisan test --compact --filter=afiliado
+```
+
+### Explicacion
+
+Afiliados es la entidad base. Pagos, multas y tramites dependen de ella.
+
+### Verificacion
+
+```powershell
+php artisan test --compact tests/Feature/IsinutaGestionTest.php
+npm run lint:check
+```
+
+---
+
+## 10. Fase 5 - Modulo Pagos
+
+**Objetivo:** generar obligaciones mensuales y registrar pagos.
+
+Reglas:
+
+| Concepto | Valor |
+| --- | --- |
+| Agua | Bs 8.00 |
+| Alcantarillado | Bs 15.00 |
+| Total | Bs 23.00 |
+| Estados | `pendiente`, `pagado` |
+| Recibo | Correlativo `REC-000001` |
+
+### Prompt para OpenCode
+
+```text
+Modulo Pagos ISINUTA.
+
+Activa:
+- laravel-best-practices
+- inertia-vue-development
+- wayfinder-development
+- pest-testing
+
+Objetivo:
+Implementar o mejorar pagos mensuales.
+
+Revisa:
+- app/Models/Pago.php
+- app/Http/Controllers/PagoController.php
+- app/Http/Requests/StorePagoRequest.php
+- app/Services/GestionAguaService.php
+- database/migrations relacionadas con pagos
+- resources/js/pages/Pagos
+- routes/web.php
+- tests/Feature/IsinutaGestionTest.php
+
+Requisitos:
+- Generar obligaciones mensuales para afiliados activos.
+- Registrar pago individual.
+- Mantener total fijo Bs 23.00.
+- Numero de recibo correlativo y sin duplicados.
+- Bloquear doble pago del mismo periodo.
+- Proteger con permisos pagos.ver y pagos.gestionar.
+- Usar transacciones si se actualiza pago y recibo.
+
+Tests:
+- Se genera cuota mensual para afiliados activos.
+- Se registra pago y cambia estado a pagado.
+- No se duplica numero de recibo.
+- No se puede pagar dos veces el mismo periodo.
+
+Ejecuta:
+php artisan test --compact tests/Feature/IsinutaGestionTest.php
+```
+
+### Explicacion
+
+Pagos concentra la regla economica principal. Cualquier cambio aqui debe tener test porque afecta dinero, deudas y reportes.
+
+### Verificacion
+
+```powershell
+php artisan test --compact tests/Feature/IsinutaGestionTest.php
+php artisan route:list --path=pagos
+```
+
+---
+
+## 11. Fase 6 - Modulo Multas
+
+**Objetivo:** registrar multas por afiliado y marcarlas como pagadas.
+
+### Prompt para OpenCode
+
+```text
+Modulo Multas ISINUTA.
+
+Activa:
+- laravel-best-practices
+- inertia-vue-development
+- wayfinder-development
+- pest-testing
+
+Objetivo:
+Crear o mejorar gestion de multas.
+
+Revisa:
+- app/Models/Multa.php
+- app/Http/Controllers/MultaController.php
+- app/Http/Requests
+- resources/js/pages/Multas
+- routes/web.php
+- tests/Feature/IsinutaGestionTest.php
+
+Requisitos:
+- Registrar multa vinculada a afiliado.
+- Validar tipo, monto, descripcion y fecha.
+- Marcar multa como pagada.
+- Proteger rutas con multas.ver y multas.gestionar.
+- UI en espanol.
+- Usar componentes existentes.
+
+Tests:
+- Usuario con permiso registra multa.
+- Usuario sin permiso recibe 403.
+- Multa cambia a pagada.
+
+Ejecuta:
+php artisan test --compact --filter=multa
+```
+
+### Explicacion
+
+Las multas tambien afectan el estado de deuda del afiliado. Deben integrarse con tramites y reportes.
+
+---
+
+## 12. Fase 7 - Modulo Tramites
+
+**Objetivo:** gestionar cambios de titular verificando que no existan deudas.
+
+Estados:
+
+| Estado | Significado |
+| --- | --- |
+| `pendiente` | Solicitud registrada |
+| `aprobado` | Admin aprobo y se actualizo titular |
+| `rechazado` | Admin rechazo |
+
+### Prompt para OpenCode
+
+```text
+Modulo Tramites ISINUTA: cambio de titular.
+
+Activa:
+- laravel-best-practices
+- inertia-vue-development
+- wayfinder-development
+- pest-testing
+
+Objetivo:
+Implementar o mejorar tramites de cambio de titular.
+
+Revisa:
+- app/Models/Tramite.php
+- app/Http/Controllers/TramiteController.php
+- app/Services/GestionAguaService.php
+- resources/js/pages/Tramites
+- routes/web.php
+- tests/Feature/IsinutaGestionTest.php
+- tests/Feature/RolePermissionsTest.php
+
+Requisitos:
+- Cajera puede crear tramite si tiene tramites.gestionar.
+- Antes de crear, verificar deudas del afiliado.
+- Si hay pagos pendientes o multas pendientes, no crear tramite.
+- Solo admin puede aprobar o rechazar.
+- Al aprobar, actualizar datos del afiliado.
+- Cajera debe recibir 403 al intentar aprobar.
+
+Tests:
+- No se crea tramite con deudas.
+- Se crea tramite sin deudas.
+- Admin aprueba y actualiza titular.
+- Cajera no puede aprobar.
+
+Ejecuta:
+php artisan test --compact --filter=tramite
+php artisan test --compact tests/Feature/RolePermissionsTest.php
+```
+
+### Explicacion
+
+Este modulo combina reglas de negocio y autorizacion. Es ideal para demostrar que el backend protege acciones criticas.
+
+---
+
+## 13. Fase 8 - Reportes y panel
+
+**Objetivo:** mostrar informacion administrativa util para toma de decisiones.
+
+Reportes:
+
+| Reporte | Permiso |
+| --- | --- |
+| Recaudacion | `reportes.ver` |
+| Deudas | `reportes.deudas` |
+| Afiliados | `reportes.deudas` o permiso definido por el proyecto |
+
+### Prompt para OpenCode
+
+```text
+Modulo Reportes y Panel ISINUTA.
+
+Activa:
+- laravel-best-practices
+- inertia-vue-development
+- wayfinder-development
+- pest-testing
+
+Objetivo:
+Mejorar dashboard y reportes.
+
+Revisa:
+- app/Http/Controllers/DashboardController.php
+- app/Http/Controllers/ReporteController.php
+- app/Services/GestionAguaService.php
+- resources/js/pages/Panel/Dashboard.vue
+- resources/js/pages/Reportes
+- routes/web.php
+- tests/Feature/DashboardTest.php
+- tests/Feature/RolePermissionsTest.php
+
+Requisitos:
+- Dashboard con afiliados activos, recaudacion del mes, deudas y tramites pendientes.
+- Reporte de recaudacion accesible a roles permitidos.
+- Reporte de deudas solo para admin si usa reportes.deudas.
+- Evitar N+1 con eager loading o agregados.
+- Filtros por fechas si el proyecto ya los maneja.
+
+Tests:
+- Dashboard carga para usuario autorizado.
+- Cajera no accede a reporte de deudas.
+- Admin accede a reporte de deudas.
+
+Ejecuta:
+php artisan test --compact tests/Feature/DashboardTest.php
+php artisan test --compact tests/Feature/RolePermissionsTest.php
+```
+
+### Explicacion
+
+Los reportes no deben calcular datos sensibles en el frontend. Laravel debe entregar datos ya filtrados y autorizados.
+
+---
+
+## 14. Fase 9 - Auditoria y gestion de usuarios
+
+**Objetivo:** administrar usuarios de forma segura y registrar acciones criticas.
+
+### Prompt para OpenCode
+
+```text
+Modulo Gestion de Usuarios y Auditoria ISINUTA.
+
+Activa:
+- opencode-seguridad-usuarios
+- fortify-development
+- laravel-best-practices
+- inertia-vue-development
+- pest-testing
+
+Objetivo:
+Revisar y fortalecer gestion de usuarios.
+
+Revisa:
+- app/Http/Controllers/UsuarioController.php
+- app/Http/Controllers/UsuarioAuditoriaController.php
+- app/Http/Requests/StoreUsuarioRequest.php
+- app/Http/Requests/UpdateUsuarioRequest.php
+- app/Models/User.php
+- app/Models/Role.php
+- resources/js/pages/Usuarios
+- tests/Feature/UsuarioGestionTest.php
+- tests/Feature/UsuarioAuditoriaTest.php
+
+Requisitos:
+- Solo admin gestiona usuarios.
+- No permitir que un admin se desactive a si mismo.
+- No permitir dejar el sistema sin administrador activo.
+- Crear usuario con password seguro.
+- Validar email unico.
+- Registrar auditoria si el proyecto ya tiene tabla/controlador.
+
+Tests:
+- Admin crea usuario.
+- Cajera recibe 403.
+- Admin no se puede desactivar a si mismo.
+- No se puede dejar sin admin activo.
+
+Ejecuta:
+php artisan test --compact tests/Feature/UsuarioGestionTest.php
+php artisan test --compact tests/Feature/UsuarioAuditoriaTest.php
+```
+
+### Explicacion
+
+Este modulo es sensible porque controla quien entra al sistema. Debe tener reglas defensivas y pruebas.
+
+---
+
+## 15. Fase 10 - Calidad, pruebas y cierre
+
+**Objetivo:** dejar el sistema estable para entrega academica o demo.
+
+### Prompt para OpenCode
+
+```text
+Auditoria final de calidad para ISINUTA.
+
+Objetivo:
+Revisar el proyecto completo antes de entrega.
+
+Revisa:
+- routes/web.php
+- app/Http/Controllers
+- app/Http/Requests
+- app/Models
+- resources/js/pages
+- resources/js/components
+- tests/Feature
+
+Checklist:
+- Todas las rutas sensibles tienen auth, verified, role y permission donde corresponde.
+- Todos los formularios importantes usan Form Request.
+- No hay URLs hardcodeadas en Vue si existe ruta Wayfinder.
+- No hay registro publico.
+- Los textos visibles estan en espanol.
+- No hay errores de lint ni build.
+- Tests principales pasan.
+
+Ejecuta:
+vendor/bin/pint --dirty --format agent
+php artisan test --compact
+npm run lint:check
+npm run build
+
+Entrega:
+1. Hallazgos por prioridad P1, P2, P3.
+2. Correcciones aplicadas.
+3. Tests ejecutados.
+4. Pasos para demo con admin, cajera y operador.
+```
+
+### Explicacion
+
+Esta fase no agrega funciones nuevas. Sirve para encontrar errores, ordenar permisos y preparar una demo confiable.
+
+---
+
+## 16. Prompts cortos por necesidad
+
+### Pedir solo analisis
+
+```text
+Analiza el modulo [NOMBRE] sin modificar archivos.
+Indica:
+1. Archivos principales.
+2. Flujo de datos.
+3. Riesgos de seguridad.
+4. Tests existentes.
+5. Mejoras recomendadas por prioridad.
+```
+
+### Pedir implementacion pequena
+
+```text
+Implementa solo este cambio:
+[CAMBIO CONCRETO]
+
+Limites:
+- No refactorices codigo no relacionado.
+- No agregues dependencias.
+- Agrega o actualiza un test Pest.
+- Ejecuta solo la prueba afectada.
+```
+
+### Pedir correccion de bug
+
+```text
+Corrige este bug:
+[DESCRIPCION DEL BUG]
+
+Primero reproduce o identifica la causa.
+Luego aplica el cambio minimo.
+Agrega una prueba que falle antes y pase despues.
+Ejecuta la prueba enfocada.
+```
+
+### Pedir revision de seguridad
+
+```text
+Revisa seguridad del modulo [NOMBRE].
+
+Busca:
+- Rutas sin middleware.
+- Form Requests sin authorize().
+- Acciones que dependen solo del frontend.
+- Mass assignment inseguro.
+- Falta de tests 403.
+
+Devuelve hallazgos P1/P2/P3 con archivo y linea.
+No modifiques codigo todavia.
+```
+
+### Pedir mejora visual
+
+```text
+Mejora la interfaz de [PAGINA/MODULO].
+
+Requisitos:
+- Mantener componentes existentes.
+- Tailwind CSS v4.
+- Responsive movil/escritorio.
+- Textos en espanol.
+- No cambiar logica backend.
+- Verificar npm run lint:check y npm run build.
+```
+
+### Pedir test faltante
+
+```text
+Agrega prueba Pest para este comportamiento:
+[COMPORTAMIENTO]
+
+Revisa tests hermanos antes de crear uno nuevo.
+Usa factories existentes.
+Ejecuta:
+php artisan test --compact --filter=[nombre aproximado]
+```
+
+---
+
+## 17. Prompts para que OpenCode explique el codigo
+
+Usalos despues de implementar una fase.
+
+```text
+Explicame el cambio como si yo tuviera que defenderlo en clase.
+Incluye:
+1. Que problema resuelve.
+2. Que archivos cambiaron.
+3. Como fluye la solicitud desde Vue hasta Laravel.
+4. Que regla de negocio se aplico.
+5. Que test demuestra que funciona.
+```
+
+```text
+Explicame la diferencia entre autenticacion y autorizacion usando este proyecto ISINUTA.
+Usa ejemplos reales:
+- Login con Fortify.
+- Middleware permission.
+- Sidebar con usePermissions.
+- Test 403 para cajera.
+```
+
+```text
+Explicame este test Pest linea por linea:
+[PEGAR TEST]
+
+Quiero entender:
+- Que datos prepara.
+- Que usuario actua.
+- Que ruta visita.
+- Que se espera.
+- Que bug evitaria en produccion.
+```
+
+---
+
+## 18. Orden sugerido de commits
+
+Un commit por fase o por cambio pequeno.
+
+Ejemplos:
+
+```text
+configura entorno base Laravel Inertia
+agrega autenticacion Fortify sin registro publico
+implementa roles permisos y middleware RBAC
+agrega gestion de usuarios para administrador
+implementa CRUD de afiliados
+implementa pagos mensuales y recibos correlativos
+agrega multas y marcado como pagada
+implementa tramites con verificacion de deudas
+agrega reportes y panel administrativo
+refuerza pruebas de autorizacion
+```
+
+Antes de cada commit:
+
+```powershell
+git status --short
+vendor/bin/pint --dirty --format agent
+php artisan test --compact --filter=NOMBRE_DEL_TEST
+```
+
+---
+
+## 19. Checklist final de entrega
+
+Funcional:
+
+- [ ] Login/logout funciona.
+- [ ] Registro publico deshabilitado.
+- [ ] Admin gestiona usuarios.
+- [ ] Afiliados CRUD funciona.
+- [ ] Pagos mensuales funcionan.
+- [ ] Recibos no se duplican.
+- [ ] Multas funcionan.
+- [ ] Tramites verifican deudas.
+- [ ] Reportes muestran datos correctos.
+- [ ] Dashboard carga indicadores.
+
+Seguridad:
+
+- [ ] Rutas privadas usan `auth` y `verified`.
+- [ ] Rutas del panel usan `role:admin,cajera,operador`.
+- [ ] Acciones sensibles usan `permission:*`.
+- [ ] Form Requests tienen `authorize()`.
+- [ ] Cajera recibe 403 donde corresponde.
+- [ ] Admin no puede dejar el sistema sin administrador activo.
+- [ ] UI oculta botones sin permiso, pero backend tambien bloquea.
+
+Calidad:
+
+- [ ] `php artisan test --compact` pasa.
+- [ ] `vendor/bin/pint --dirty --format agent` ejecutado.
+- [ ] `npm run lint:check` pasa.
+- [ ] `npm run build` pasa.
+- [ ] No hay dependencias agregadas sin justificacion.
+- [ ] Textos visibles en espanol.
+
+Demo:
+
+- [ ] Login con `admin@isinuta.test`.
+- [ ] Login con `cajera@isinuta.test`.
+- [ ] Login con `operador@isinuta.test`.
+- [ ] Mostrar diferencia de permisos.
+- [ ] Crear afiliado.
+- [ ] Generar pago.
+- [ ] Registrar multa.
+- [ ] Crear tramite.
+- [ ] Mostrar reporte.
+
+---
+
+## 20. Documento unico y archivos internos
+
+Para desarrollar la aplicacion paso a paso con OpenCode, el estudiante solo necesita abrir este archivo:
+
+```text
+docs/GUIA_DESARROLLO_ISINUTA_OPENCODE.md
+```
+
+Los demas archivos no son obligatorios para seguir la clase. En este repositorio se dejaron solo los archivos tecnicos necesarios para que OpenCode y Laravel funcionen correctamente:
+
+| Archivo | Uso |
+| --- | --- |
+| `AGENTS.md` | Reglas tecnicas que leen los agentes IA; no es guia para estudiantes |
+| `opencode.json` | Configuracion de OpenCode y Laravel Boost |
+| `.agents/skills/opencode-seguridad-usuarios/` | Skills internas para agentes; no hace falta abrirlas en clase |
+| `routes/web.php` | Rutas del sistema |
+| `app/Services/GestionAguaService.php` | Reglas de pagos, deudas y tramites |
+| `tests/Feature/` | Pruebas principales del sistema |
+| `resources/js/pages/` | Paginas Inertia Vue |
+| `resources/js/components/isinuta/` | Componentes reutilizables |
+
+Recomendacion practica:
+
+- Para clase o desarrollo paso a paso: usa solo esta guia.
+- Para OpenCode/Codex: conserva `AGENTS.md` y `opencode.json`.
+- Si se agregan nuevos apuntes, deben integrarse aqui o ubicarse fuera del repositorio para no duplicar instrucciones.
+
+---
+
+## 21. Prompt maestro para desarrollar todo el sistema
+
+Usa este prompt solo cuando quieras que OpenCode planifique una fase grande. No lo uses para pedir que haga todo el sistema de una sola vez.
+
+```text
+Actua como desarrollador senior Laravel, Inertia Vue y seguridad web.
+
+Quiero desarrollar paso a paso la aplicacion appweb_gestionaguaisinuta para ISINUTA.
+
+Antes de escribir codigo:
+1. Lee docs/GUIA_DESARROLLO_ISINUTA_OPENCODE.md.
+2. Usa AGENTS.md solo como reglas tecnicas del repositorio.
+3. Revisa routes/web.php, app/Models, app/Http/Controllers, app/Http/Requests, resources/js/pages y tests/Feature.
+4. Usa Laravel Boost search-docs para la documentacion versionada cuando toques Laravel, Fortify, Inertia, Wayfinder o Pest.
+5. Propone un plan por fases.
+
+Forma de trabajo:
+- Implementa una fase por vez.
+- No agregues dependencias sin aprobacion.
+- Mantén textos visibles en espanol.
+- Usa Form Requests, middleware y tests.
+- Usa Wayfinder en Vue.
+- Ejecuta pruebas enfocadas al final de cada fase.
+- Resume archivos modificados y como probar.
+
+Primera tarea:
+[ESCRIBE AQUI LA FASE O MODULO QUE QUIERES DESARROLLAR]
+```
+
+---
+
+## 22. Recomendacion para estudiantes
+
+No pidas a OpenCode "haz todo el proyecto". Pide una fase pequena, revisa el diff, ejecuta pruebas y explica el resultado. El aprendizaje esta en entender por que se agrego cada modelo, ruta, permiso, validacion y test.
+
+Una buena entrega no es solo que la aplicacion funcione. Tambien debe demostrar:
+
+- reglas de negocio correctas,
+- seguridad en backend,
+- pruebas automatizadas,
+- interfaz clara en espanol,
+- codigo consistente con Laravel e Inertia.

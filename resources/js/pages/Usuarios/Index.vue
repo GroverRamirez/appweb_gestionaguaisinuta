@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { useDebounceFn } from '@vueuse/core';
+import { ClipboardList, Pencil, Plus, Shield, UserCheck, UserX, Users } from 'lucide-vue-next';
+import { computed, ref, watch, withDefaults } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
@@ -7,11 +10,8 @@ import PaginationLinks from '@/components/isinuta/PaginationLinks.vue';
 import SearchInput from '@/components/isinuta/SearchInput.vue';
 import StatusBadge from '@/components/isinuta/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { ClipboardList, Pencil, Plus, Shield, UserCheck, UserX, Users } from 'lucide-vue-next';
-import { computed, ref, watch, withDefaults } from 'vue';
 
 type Usuario = {
     id: number;

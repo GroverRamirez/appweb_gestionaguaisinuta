@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import type { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { etiquetaDe, etiquetaMetodoPago } from '@/lib/etiquetas';
 import { Droplets, Printer } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { etiquetaDe, etiquetaMetodoPago } from '@/lib/etiquetas';
+import type { BreadcrumbItem } from '@/types';
 
 defineProps<{
     pago: {

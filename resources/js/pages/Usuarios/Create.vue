@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Shield } from 'lucide-vue-next';
+import InputError from '@/components/InputError.vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
-import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { Shield } from 'lucide-vue-next';
 
 defineProps<{
     roles_disponibles: Array<{ value: string; label: string }>;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     BarChart3,
@@ -15,7 +15,6 @@ import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import { usePermissions } from '@/composables/usePermissions';
 import {
     Sidebar,
     SidebarContent,
@@ -25,9 +24,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '@/composables/usePermissions';
 import type { NavItem } from '@/types';
 
-const page = usePage();
 const { can, hasRole } = usePermissions();
 
 const puedeUsarPanel = computed(

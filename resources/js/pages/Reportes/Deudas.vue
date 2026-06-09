@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import { AlertTriangle, BarChart3, CreditCard } from 'lucide-vue-next';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
 import ReportNav from '@/components/isinuta/ReportNav.vue';
 import StatCard from '@/components/isinuta/StatCard.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import { AlertTriangle, BarChart3, CreditCard } from 'lucide-vue-next';
 
 defineProps<{
     afiliados: Array<{

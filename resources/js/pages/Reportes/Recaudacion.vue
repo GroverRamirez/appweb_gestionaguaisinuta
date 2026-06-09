@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router } from '@inertiajs/vue3';
+import { BarChart3, TrendingUp } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
 import ReportNav from '@/components/isinuta/ReportNav.vue';
 import StatCard from '@/components/isinuta/StatCard.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { BarChart3, TrendingUp } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
 
 const props = defineProps<{
     pagos: any[];

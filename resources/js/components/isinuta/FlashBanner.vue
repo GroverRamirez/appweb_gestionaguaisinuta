@@ -8,8 +8,14 @@ const flash = computed(() => (page.props.flash as Record<string, string | undefi
 
 const message = computed(() => flash.value.success ?? flash.value.error ?? flash.value.info);
 const type = computed(() => {
-    if (flash.value.success) return 'success';
-    if (flash.value.error) return 'error';
+    if (flash.value.success) {
+        return 'success';
+    }
+
+    if (flash.value.error) {
+        return 'error';
+    }
+
     return 'info';
 });
 </script>

@@ -23,6 +23,7 @@ const accentBar = computed(() => {
         danger: 'isinuta-stat-accent-danger',
         info: 'isinuta-stat-accent-info',
     };
+
     return map[props.variant];
 });
 
@@ -34,6 +35,7 @@ const iconClass = computed(() => {
         danger: 'bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-rose-500/30',
         info: 'bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-sky-500/30',
     };
+
     return map[props.variant];
 });
 </script>

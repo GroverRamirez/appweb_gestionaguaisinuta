@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { Check, ClipboardList, Plus, X } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FilterSelect from '@/components/isinuta/FilterSelect.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
@@ -7,10 +9,8 @@ import PageHeader from '@/components/isinuta/PageHeader.vue';
 import StatusBadge from '@/components/isinuta/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/composables/usePermissions';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { Check, ClipboardList, Plus, X } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
 
 const { can } = usePermissions();
 

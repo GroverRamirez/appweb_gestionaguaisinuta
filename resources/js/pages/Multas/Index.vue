@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { useDebounceFn } from '@vueuse/core';
+import { AlertTriangle, Plus } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FilterSelect from '@/components/isinuta/FilterSelect.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
@@ -7,11 +10,9 @@ import PageHeader from '@/components/isinuta/PageHeader.vue';
 import SearchInput from '@/components/isinuta/SearchInput.vue';
 import StatusBadge from '@/components/isinuta/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
-import type { BreadcrumbItem } from '@/types';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { etiquetaDe, etiquetaTipoMulta } from '@/lib/etiquetas';
-import { useDebounceFn } from '@vueuse/core';
-import { AlertTriangle, Plus } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import type { BreadcrumbItem } from '@/types';
 
 const props = defineProps<{
     multas: { data: any[]; links: any[] };

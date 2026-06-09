@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AfiliadoForm from '@/components/isinuta/AfiliadoForm.vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
 import PageHeader from '@/components/isinuta/PageHeader.vue';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{
     afiliado: {

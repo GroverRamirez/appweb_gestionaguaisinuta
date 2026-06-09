@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { InertiaForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { InertiaForm } from '@inertiajs/vue3';
 
 type AfiliadoFormData = {
     ci: string;
@@ -20,6 +21,8 @@ const props = defineProps<{
     submitLabel: string;
     showDelete?: boolean;
 }>();
+
+const form = computed(() => props.form);
 
 const emit = defineEmits<{
     submit: [];

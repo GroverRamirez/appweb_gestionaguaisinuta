@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import SearchInput from '@/components/isinuta/SearchInput.vue';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { router } from '@inertiajs/vue3';
 import { Search, User } from 'lucide-vue-next';
 import { ref } from 'vue';
+import SearchInput from '@/components/isinuta/SearchInput.vue';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 const props = withDefaults(
     defineProps<{
@@ -32,6 +32,7 @@ const buscar = async () => {
     }
 
     buscando.value = true;
+
     try {
         const res = await fetch(`${props.searchUrl}?q=${encodeURIComponent(busqueda.value)}`);
         resultados.value = await res.json();

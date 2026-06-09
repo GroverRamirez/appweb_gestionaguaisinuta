@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { useDebounceFn } from '@vueuse/core';
+import { CalendarPlus, CreditCard, Plus, Receipt } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import DataCard from '@/components/isinuta/DataCard.vue';
 import FilterSelect from '@/components/isinuta/FilterSelect.vue';
 import FlashBanner from '@/components/isinuta/FlashBanner.vue';
@@ -8,11 +11,8 @@ import SearchInput from '@/components/isinuta/SearchInput.vue';
 import StatusBadge from '@/components/isinuta/StatusBadge.vue';
 import TarifaBanner from '@/components/isinuta/TarifaBanner.vue';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { CalendarPlus, CreditCard, Plus, Receipt } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
 
 const props = defineProps<{
     pagos: { data: any[]; links: any[] };
